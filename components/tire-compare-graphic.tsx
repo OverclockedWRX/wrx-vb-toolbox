@@ -1,7 +1,9 @@
 import { useId, useState, type ReactNode } from "react";
+import { Wheel3DView } from "@/components/wheel-3d-view";
 import { outerLipFromHubMm, tireDiameterMm, tireSidewallMm } from "@/lib/wheel-math";
 import { formatTire, type TireSpec, type WheelSpec } from "@/lib/stock-wheels";
 
+type GraphicMode = "3d" | "diagram";
 type ViewMode = "side-by-side" | "overlay";
 
 type Props = {
@@ -12,6 +14,7 @@ type Props = {
 };
 
 export function TireCompareGraphic({ stockTire, stockWheel, proposedTire, proposedWheel }: Props) {
+  const [graphic, setGraphic] = useState<GraphicMode>("3d");
   const [mode, setMode] = useState<ViewMode>("side-by-side");
   const uid = useId().replace(/:/g, "");
 
@@ -28,19 +31,41 @@ export function TireCompareGraphic({ stockTire, stockWheel, proposedTire, propos
         <div>
           <p className="text-sm font-medium">Visual comparison</p>
           <p className="text-xs text-muted-foreground">
-            Side view shows overall diameter and sidewall. Front view shows section width and poke from the hub.
+            {graphic === "3d"
+              ? "Drag to turn the wheels. The hub and axle stay put — offset slides each wheel along the axle."
+              : "Side view shows overall diameter and sidewall. Front view shows section width and poke from the hub."}
           </p>
         </div>
         <div className="flex gap-1 text-xs">
-          <button type="button" className={chip(mode === "side-by-side")} onClick={() => setMode("side-by-side")}>
-            Side by side
+          <button type="button" className={chip(graphic === "3d")} onClick={() => setGraphic("3d")}>
+            3D
           </button>
-          <button type="button" className={chip(mode === "overlay")} onClick={() => setMode("overlay")}>
-            Overlay
+          <button type="button" className={chip(graphic === "diagram")} onClick={() => setGraphic("diagram")}>
+            Diagrams
           </button>
+          {graphic === "diagram" ? (
+            <>
+              <button type="button" className={chip(mode === "side-by-side")} onClick={() => setMode("side-by-side")}>
+                Side by side
+              </button>
+              <button type="button" className={chip(mode === "overlay")} onClick={() => setMode("overlay")}>
+                Overlay
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
 
+      {graphic === "3d" ? (
+        <Wheel3DView
+          stockTire={stockTire}
+          stockWheel={stockWheel}
+          proposedTire={proposedTire}
+          proposedWheel={proposedWheel}
+        />
+      ) : null}
+
+      {graphic === "diagram" ? (
       <div className="grid gap-3 lg:grid-cols-2">
         <GraphicCard title="Side view · diameter & sidewall">
           {mode === "side-by-side" ? (
@@ -90,6 +115,7 @@ export function TireCompareGraphic({ stockTire, stockWheel, proposedTire, propos
           )}
         </GraphicCard>
       </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <Legend swatch="stock" label={`Stock · ${formatTire(stockTire)}`} />

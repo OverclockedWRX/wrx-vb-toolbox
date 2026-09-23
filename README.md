@@ -25,6 +25,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ### Wheel / tire
 - Compare a proposed wheel and tire setup to **stock**
+- Drag a **3D six-spoke** preview to turn the wheels and see diameter, width, and offset
 - See diameter change, sidewall, poke, and speedometer error
 - Fitment guidance for **stock ride height** (lowered cars not covered)
 
