@@ -23,4 +23,11 @@ Open http://127.0.0.1:3847. Entry is [`src/main.tsx`](src/main.tsx); UI lives un
 
 The zip contains one HTML file that runs with no Node, npm, or network. Logs stay in the browser; nothing is uploaded. Fictional sample CSVs are embedded for offline “Load sample logs.”
 
-Version in the footer comes from [`lib/version.ts`](lib/version.ts); keep it in sync with [`package.json`](package.json).
+## Version bumps (required on every change)
+
+Any shipped change must bump the footer version. Update **both**:
+
+1. [`lib/version.ts`](lib/version.ts) (`APP_VERSION`) — what the page footer shows
+2. [`package.json`](package.json) (`version`) — keep identical
+
+Current baseline: **0.5.5**. Use semver patch/minor/major as appropriate (patch for small fixes, minor for features). Also refresh `release/` when packing so the offline HTML matches.
