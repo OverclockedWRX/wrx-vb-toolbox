@@ -2,6 +2,10 @@
 
 A browser review for Cobb Accessport CSV logs from the WRX VB, model years 2022 through 2026. Load one or more files, then start the review. Your logs stay in the browser.
 
+**Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning.** Subaru, WRX, Accessport, and COBB are trademarks of their respective owners. This project is independent and unofficial.
+
+Licensed under the [MIT License](LICENSE).
+
 ## Download for any computer (no install)
 
 Build a zip that anyone can open without Node, npm, or an internet connection:
@@ -38,7 +42,7 @@ Under **Car preset for road-load power**, pick market, model year, and trim to l
 
 Under **Wheel / tire offset calculator**, compare a proposed wheel and tire to stock. Stock size is taken from the VIN trim or the car preset when available, or you can pick Base 17″ / Premium 18″ / TR·tS 19″ and type every number by hand. The comparison shows diameter change, sidewall, poke vs stock, speedo error, and stock-height fitment notes (max about 18×9.5 ET35–38 with up to ~255–265 section). **Sizes that fit are for stock ride height only; lowered cars are not considered.**
 
-The footer shows **Created by Scott Myers** and the app version (currently matching `package.json`).
+The footer shows **Created by Scott Myers**, the app version (matching `package.json`), the MIT license, and the Subaru/COBB non-affiliation notice.
 
 The Accessport header is read for the car and the reflash. Each CSV gets its own review. When you load more than one file, the results open in tabs so you can click between them. The grade uses safe wide-open AFR limits for 87, 89, 91, 92, or 93 octane, scaled to the boost target in the tune name. If the tune name has no octane, the review waits until you pick one. If a required channel is missing, the review lists every channel it needs and every channel that is missing, and it explains that there is not enough data to write a review.
 

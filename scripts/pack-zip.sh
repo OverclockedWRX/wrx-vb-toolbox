@@ -31,6 +31,10 @@ Works on Windows, macOS, and Linux. If the page is blank, try Chrome,
 Edge, or Firefox. Keep this HTML as one file; leave the .html extension.
 
 These sample logs are fictional. They are not from a real car.
+
+Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning.
+Subaru, WRX, Accessport, and COBB are trademarks of their respective owners.
+This software is independent and unofficial. Licensed under the MIT License.
 EOF
 
 mkdir -p release

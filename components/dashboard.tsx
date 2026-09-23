@@ -456,9 +456,13 @@ export function Dashboard() {
         </section>
 
         <footer className="border-t border-border">
-          <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground sm:px-6">
-            Created by Scott Myers · v{APP_VERSION}
-          </p>
+          <div className="mx-auto max-w-6xl space-y-1 px-4 py-6 text-sm text-muted-foreground sm:px-6">
+            <p>Created by Scott Myers · v{APP_VERSION} · MIT License</p>
+            <p className="text-xs leading-5">
+              Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning. Subaru, WRX, Accessport, and
+              COBB are trademarks of their respective owners.
+            </p>
+          </div>
         </footer>
       </div>
     </DisclaimerGate>
