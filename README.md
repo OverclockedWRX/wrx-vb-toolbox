@@ -4,6 +4,16 @@ Independent tools for **2022–2026 Subaru WRX (VB)** owners. Open the HTML file
 
 **Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning.** Subaru, WRX, Accessport, and COBB are trademarks of their respective owners.
 
+
+
+**The COBB AP Log review is done by an algorithm. It DOES NOT have final say over your logs. Sometimes there is legitimate false knock.
+It tries it's best to detect these scenarios but at the end of the day, it's not an AI chatbot, nor an actual human. 
+The Log reviews are meant to be a quick check on things, and that is it. 
+Obvious problems should be shown to the user, however, some things can get missed. Always have your tuner review your logs.**
+
+
+
+
 ## What’s inside
 
 ### Log review
