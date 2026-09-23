@@ -14,7 +14,7 @@ mkdir -p "$STAGE/$NAME"
 cp dist/index.html "$STAGE/$NAME/WRX-Tune-Check.html"
 VERSION="$(node -p "require('./package.json').version")"
 cat > "$STAGE/$NAME/README.txt" <<EOF
-VB WRX Accessport log review v${VERSION}
+WRX Tool Box! v${VERSION}
 ========================================
 
 This folder needs no install. No Node, no npm, no internet.

@@ -23,7 +23,7 @@ import {
   type Market,
 } from "@/lib/car-presets";
 import { defaultSettings, type PowerSettings } from "@/lib/types";
-import { APP_VERSION } from "@/lib/version";
+import { APP_NAME, APP_VERSION } from "@/lib/version";
 
 type MainTab = "logs" | "tires";
 
@@ -136,9 +136,9 @@ export function Dashboard() {
               </div>
               <div className="mx-auto max-w-3xl space-y-2 text-center">
                 <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">VB WRX · 2022–2026</p>
-                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">WRX VB Toolbox!</h1>
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{APP_NAME}</h1>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Two tools in one page. Use the tabs below to switch between Accessport log review and the wheel / tire calculator. Nothing is uploaded.
+                  Two tools in one page. Use the tabs below to switch between log review and the wheel / tire calculator. Nothing is uploaded.
                 </p>
               </div>
             </div>

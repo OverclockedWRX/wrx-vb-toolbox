@@ -1,4 +1,4 @@
-# WRX VB Toolbox!
+# WRX Tool Box!
 
 Independent tools for **2022–2026 Subaru WRX (VB)** owners. Open the HTML file in your browser — no install, no account, and your files never leave your computer.
 

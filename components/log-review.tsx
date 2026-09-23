@@ -70,7 +70,7 @@ export function LogReview({
             ) : null}
           </div>
           <div className="max-w-3xl space-y-3">
-            <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">Accessport log review</p>
+            <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">Log review</p>
             <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{headline(report)}</h1>
             <p className="text-base leading-7 text-muted-foreground sm:text-lg">{summary(report)}</p>
           </div>
