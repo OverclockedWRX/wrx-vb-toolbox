@@ -30,4 +30,4 @@ Any shipped change must bump the footer version. Update **both**:
 1. [`lib/version.ts`](lib/version.ts) (`APP_VERSION`) — what the page footer shows
 2. [`package.json`](package.json) (`version`) — keep identical
 
-Current baseline: **0.6.2**. Product name is always **WRX Tool Box!** (`APP_NAME` in [`lib/version.ts`](lib/version.ts)). Use semver patch/minor/major as appropriate (patch for small fixes, minor for features). Also refresh `release/` when packing so the offline HTML matches.
+Current baseline: **0.7.3**. Product name is always **WRX Tool Box!** (`APP_NAME` in [`lib/version.ts`](lib/version.ts)). Use semver patch/minor/major as appropriate (patch for small fixes, minor for features). Also refresh `release/` when packing so the offline HTML matches.

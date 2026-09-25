@@ -20,7 +20,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 - Drop in one or more **COBB Accessport CSV** logs
 - Get a clear **S / A / B / F** grade with notes on AFR, boost, knock, and other red flags
 - See charts for pulls, fueling, and estimated power
-- Load **sample logs** anytime to try the review without your own files
+- Load **sample logs** anytime to try the review, including fictional 2nd and 3rd gear wide-open pulls
 - Multi-file sessions open in tabs so you can compare pulls side by side
 
 ### Wheel / tire

@@ -2,6 +2,7 @@
 """Write fictional VB WRX sample CSVs. Nothing in here is from a real car."""
 
 import csv
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "logs"
@@ -101,6 +102,9 @@ def pull(
     rpm0: float = 2800,
     rpm1: float = 6100,
     seconds: float = 5.0,
+    gear: int = 3,
+    speed0: float = 34,
+    speed1: float = 82,
     lean_at: float | None = None,
     lean_afr: float | None = None,
     knock_from: float | None = None,
@@ -108,30 +112,37 @@ def pull(
     knock: float = 0.0,
     **overrides: float,
 ) -> list[dict]:
+    """One fictional wide-open pull. AFR, boost, and load move with rpm so the cloud is not a flat line."""
     rows = []
     steps = int(seconds / 0.05)
     for i in range(steps):
         p = i / (steps - 1)
-        boost = boost_hold * min(1.0, (p + 0.08) / 0.42)
+        spool = min(1.0, max(0.0, (p - 0.04) / 0.30))
+        boost = boost_hold * (0.12 + 0.88 * spool)
+        boost += math.sin(p * math.pi * 3) * 0.28 * spool
+        shape = math.sin(p * math.pi)
+        wobble = math.sin(p * math.pi * 7) * 0.03
+        on_boost_afr = afr - 0.14 * shape + wobble
+        on_boost_cmd = cmd - 0.12 * shape
         row = blank(
             t=round(t0 + i * 0.05, 2),
             accel=100,
-            throttle=97,
-            gear=3,
+            throttle=98,
+            gear=gear,
             rpm=round(rpm0 + (rpm1 - rpm0) * p, 1),
-            speed=round(34 + 48 * p, 1),
+            speed=round(speed0 + (speed1 - speed0) * p, 1),
             boost=round(boost, 2),
             tgt=round(target if boost >= 8 else max(boost, 0), 2),
-            afr=afr if boost >= 10 else 13.4,
-            cmd=cmd if boost >= 10 else 12.8,
-            load=round(1.55 + 0.75 * p, 3),
-            fp=round(2300 + 500 * p, 0),
-            duty=round(16 + 12 * p, 1),
-            timing=round(6 + 8 * p, 1),
+            afr=round(on_boost_afr if boost >= 10 else 13.35 + wobble, 2),
+            cmd=round(on_boost_cmd if boost >= 10 else 12.8, 2),
+            load=round(0.55 + (boost / max(boost_hold, 1)) * (0.85 + 0.65 * p) + 0.05 * math.sin(p * 11), 3),
+            fp=round(2100 + 700 * spool + 200 * p, 0),
+            duty=round(14 + 24 * p * max(spool, 0.2), 1),
+            timing=round(5.5 + 9 * p - 1.2 * spool, 1),
             coolant=190,
             oil=202,
             iat=82,
-            manifold=96,
+            manifold=round(88 + 14 * spool, 1),
             **overrides,
         )
         if lean_at is not None and lean_afr is not None and abs(p - lean_at) < 0.012 and boost >= 12:
@@ -201,10 +212,39 @@ def write(name: str, reflash: str, rows: list[dict]) -> None:
             )
 
 
+def wide_open_rows(t0: float, **pull_kwargs: float) -> list[dict]:
+    """2nd gear then 3rd gear, both wide open, with a lift between them."""
+    second = pull(
+        t0,
+        gear=2,
+        rpm0=3600,
+        rpm1=6500,
+        seconds=2.8,
+        speed0=24,
+        speed1=54,
+        **pull_kwargs,
+    )
+    second_end = second[-1]["t"]
+    lifted = lift(second_end + 0.1, **{key: pull_kwargs[key] for key in ("learn1", "learn3", "dam", "fkl") if key in pull_kwargs})
+    third_start = lifted[-1]["t"] + 0.15
+    third = pull(
+        third_start,
+        gear=3,
+        rpm0=2800,
+        rpm1=6100,
+        seconds=5.0,
+        speed0=34,
+        speed1=82,
+        **pull_kwargs,
+    )
+    return second + lifted + third
+
+
 def pack(reflash: str, cruise_name: str, pull_name: str, **pull_kwargs: float) -> None:
     shared = {key: pull_kwargs[key] for key in ("learn1", "learn3", "dam", "fkl") if key in pull_kwargs}
     write(cruise_name, reflash, cruise(4.0, 0.0, **shared))
-    rows = cruise(1.5, 0.0, **shared) + pull(1.5, **pull_kwargs) + lift(6.5, **shared)
+    pulls = wide_open_rows(1.2, **pull_kwargs)
+    rows = cruise(1.2, 0.0, **shared) + pulls + lift(pulls[-1]["t"] + 0.15, **shared)
     write(pull_name, reflash, rows)
 
 
@@ -223,22 +263,21 @@ def main() -> None:
     )
     a_rows_knock = cruise(2.2, 0.0, learn1=-1.0, learn3=3.1, fk=-1.05, accel=14, boost=-6.2)
     write("sample-a-cruise.csv", "Sample Map Almost Tidy - 16psi 93oct", a_rows_knock)
+    a_pulls = wide_open_rows(
+        1.2,
+        boost_hold=16.05,
+        target=16.0,
+        afr=11.12,
+        cmd=11.08,
+        learn1=-1.0,
+        learn3=3.1,
+        lean_at=0.62,
+        lean_afr=11.90,
+    )
     write(
         "sample-a-pull.csv",
         "Sample Map Almost Tidy - 16psi 93oct",
-        cruise(1.2, 0.0, learn1=-1.0, learn3=3.1)
-        + pull(
-            1.2,
-            boost_hold=16.05,
-            target=16.0,
-            afr=11.12,
-            cmd=11.08,
-            learn1=-1.0,
-            learn3=3.1,
-            lean_at=0.62,
-            lean_afr=11.90,
-        )
-        + lift(6.2, learn1=-1.0, learn3=3.1, fk=-1.05),
+        cruise(1.2, 0.0, learn1=-1.0, learn3=3.1) + a_pulls + lift(a_pulls[-1]["t"] + 0.15, learn1=-1.0, learn3=3.1, fk=-1.05),
     )
     pack(
         "Sample Map Trim Goblin - 17psi 91oct",
@@ -267,31 +306,29 @@ def main() -> None:
         lean_at=0.58,
         lean_afr=11.80,
     )
+    overboost = wide_open_rows(1.0, boost_hold=50.0, target=18.0, afr=11.05, cmd=11.00, learn3=1.5)
     write(
         "sample-50psi.csv",
         "Sample Map Wastegate Vacation - 18psi 93oct",
-        cruise(1.0, 0.0, learn3=1.5)
-        + pull(1.0, boost_hold=50.0, target=18.0, afr=11.05, cmd=11.00, learn3=1.5, seconds=4.2)
-        + lift(5.2, learn3=1.5),
+        cruise(1.0, 0.0, learn3=1.5) + overboost + lift(overboost[-1]["t"] + 0.15, learn3=1.5),
+    )
+    knocked = wide_open_rows(
+        1.0,
+        boost_hold=16.4,
+        target=16.0,
+        afr=11.20,
+        cmd=11.15,
+        dam=8.75,
+        fkl=-6.0,
+        learn3=4.0,
+        knock_from=0.25,
+        knock_to=0.85,
+        knock=-12.50,
     )
     write(
         "sample-knock.csv",
         "Sample Map Knock Choir - 16psi 91oct",
-        cruise(1.0, 0.0, dam=8.75, fkl=-6.0, learn3=4.0)
-        + pull(
-            1.0,
-            boost_hold=16.4,
-            target=16.0,
-            afr=11.20,
-            cmd=11.15,
-            dam=8.75,
-            fkl=-6.0,
-            learn3=4.0,
-            knock_from=0.25,
-            knock_to=0.85,
-            knock=-12.50,
-        )
-        + lift(6.0, dam=8.75, fkl=-6.0, learn3=4.0),
+        cruise(1.0, 0.0, dam=8.75, fkl=-6.0, learn3=4.0) + knocked + lift(knocked[-1]["t"] + 0.15, dam=8.75, fkl=-6.0, learn3=4.0),
     )
 
 

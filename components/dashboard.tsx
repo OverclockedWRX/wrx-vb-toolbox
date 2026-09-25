@@ -457,7 +457,17 @@ export function Dashboard() {
 
         <footer className="border-t border-border">
           <div className="mx-auto max-w-6xl space-y-1 px-4 py-6 text-sm text-muted-foreground sm:px-6">
-            <p>Created by Scott Myers · v{APP_VERSION} · MIT License</p>
+            <p>
+              Created by Scott Myers · v{APP_VERSION} · MIT License ·{" "}
+              <a
+                href="https://github.com/OverclockedWRX/wrx-vb-toolbox"
+                className="underline underline-offset-2 hover:text-foreground"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+            </p>
             <p className="text-xs leading-5">
               Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning. Subaru, WRX, Accessport, and
               COBB are trademarks of their respective owners.
