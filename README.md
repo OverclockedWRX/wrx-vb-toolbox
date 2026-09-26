@@ -40,7 +40,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ## How to use it
 
-1. Open `WRX-Tune-Check.html` (from the release zip)
+1. Open `wrxtoolbox0.8.1.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Use **Log review** or **Wheel / tire**
 4. Optionally set VIN and/or car preset, then load logs or enter wheel sizes

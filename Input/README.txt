@@ -1,9 +1,9 @@
-﻿WRX Tool Box! v0.8.0
+﻿WRX Tool Box! v0.8.1
 ========================================
 
 This folder needs no install. No Node, no npm, no internet.
 
-1. Double-click WRX-Tune-Check.html
+1. Double-click wrxtoolbox0.8.1.html
 2. It opens in your default browser
 3. Use the Log review or Wheel / tire tabs
 4. Load Accessport CSV files, or click "Load sample logs"

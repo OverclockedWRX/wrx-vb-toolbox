@@ -8,22 +8,24 @@ python3 scripts/embed-samples.py
 
 PACK_SINGLE=1 npm run build
 
-STAGE="$(mktemp -d)"
-NAME="WRX-Tune-Check"
-mkdir -p "$STAGE/$NAME"
-cp dist/index.html "$STAGE/$NAME/WRX-Tune-Check.html"
 VERSION="$(node -p "require('./package.json').version")"
-cat > "$STAGE/$NAME/README.txt" <<EOF
+FILE="wrxtoolbox${VERSION}"
+
+STAGE="$(mktemp -d)"
+mkdir -p "$STAGE/$FILE"
+cp dist/index.html "$STAGE/$FILE/${FILE}.html"
+cat > "$STAGE/$FILE/README.txt" <<EOF
 WRX Tool Box! v${VERSION}
 ========================================
 
 This folder needs no install. No Node, no npm, no internet.
 
-1. Double-click WRX-Tune-Check.html
+1. Double-click ${FILE}.html
 2. It opens in your default browser
-3. Load your Accessport CSV files, or click "Load sample logs"
-4. Optionally pick a car preset (market / year / trim) for road-load power
-5. Click "Start review" — each CSV opens in its own tab when you load more than one
+3. Use the Log review or Wheel / tire tabs
+4. Load Accessport CSV files, or click "Load sample logs"
+5. Optionally pick a car preset (market / year / trim)
+6. Click "Start review" — each CSV opens in its own tab when you load more than one
 
 Your logs stay in the browser. Nothing is uploaded.
 
@@ -37,14 +39,24 @@ Subaru, WRX, Accessport, and COBB are trademarks of their respective owners.
 This software is independent and unofficial. Licensed under the MIT License.
 EOF
 
-mkdir -p release
-ZIP="$ROOT/release/WRX-Tune-Check.zip"
+mkdir -p release Input
+cp dist/index.html "$ROOT/release/${FILE}.html"
+cp dist/index.html "$ROOT/Input/${FILE}.html"
+cp "$STAGE/$FILE/README.txt" "$ROOT/release/README.txt"
+cp "$STAGE/$FILE/README.txt" "$ROOT/Input/README.txt"
+rm -f "$ROOT/release/WRX-Tune-Check.html" "$ROOT/release/WRX-Tune-Check.zip" \
+  "$ROOT/Input/WRX-Tune-Check.html"
+find "$ROOT/release" "$ROOT/Input" -maxdepth 1 -type f \
+  \( -name 'wrxtoolbox*.html' -o -name 'wrxtoolbox*.zip' \) \
+  ! -name "${FILE}.html" ! -name "${FILE}.zip" -delete
+
+ZIP="$ROOT/release/${FILE}.zip"
 rm -f "$ZIP"
 (
   cd "$STAGE"
-  zip -r "$ZIP" "$NAME"
+  zip -r "$ZIP" "$FILE"
 )
 rm -rf "$STAGE"
 
 echo "Built $ZIP"
-ls -lh "$ZIP" "$ROOT/dist/index.html"
+ls -lh "$ZIP" "$ROOT/release/${FILE}.html"
