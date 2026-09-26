@@ -43,9 +43,20 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ## How to use it
 
-1. Open `wrxtoolbox0.10.1.html` (from the release zip)
+1. Open `wrxtoolbox0.11.0.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Optionally set the car preset above the tabs
 4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
+
+## Host it on your network
+
+The release folder includes a `Dockerfile`. It only serves the HTML file. Logs still stay in each browser.
+
+```bash
+docker build -t wrxtoolbox:0.11.0 .
+docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.11.0
+```
+
+Open http://127.0.0.1:8080 on that computer, or http://&lt;that-computer-ip&gt;:8080 from another device on the same network. Stop it with `docker rm -f wrxtoolbox`.
 
 Created by Scott Myers · MIT License

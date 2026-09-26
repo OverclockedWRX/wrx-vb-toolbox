@@ -32,6 +32,19 @@ Your logs stay in the browser. Nothing is uploaded.
 Works on Windows, macOS, and Linux. If the page is blank, try Chrome,
 Edge, or Firefox. Keep this HTML as one file; leave the .html extension.
 
+Host on your own network (Docker)
+----------------------------------
+Docker only serves this HTML file. Logs still stay in each browser.
+
+1. Install Docker
+2. In this folder:
+     docker build -t wrxtoolbox:${VERSION} .
+     docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:${VERSION}
+3. On this computer, open http://127.0.0.1:8080
+4. On another computer on the same network, open http://<this-computer-ip>:8080
+
+Stop it with: docker rm -f wrxtoolbox
+
 These sample logs are fictional. They are not from a real car.
 
 Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning.
@@ -39,11 +52,18 @@ Subaru, WRX, Accessport, and COBB are trademarks of their respective owners.
 This software is independent and unofficial. Licensed under the MIT License.
 EOF
 
+cat > "$STAGE/$FILE/Dockerfile" <<EOF
+FROM nginx:1.27-alpine
+COPY ${FILE}.html /usr/share/nginx/html/index.html
+EXPOSE 80
+EOF
+
 mkdir -p release Input
 cp dist/index.html "$ROOT/release/${FILE}.html"
 cp dist/index.html "$ROOT/Input/${FILE}.html"
 cp "$STAGE/$FILE/README.txt" "$ROOT/release/README.txt"
 cp "$STAGE/$FILE/README.txt" "$ROOT/Input/README.txt"
+cp "$STAGE/$FILE/Dockerfile" "$ROOT/release/Dockerfile"
 rm -f "$ROOT/release/WRX-Tune-Check.html" "$ROOT/release/WRX-Tune-Check.zip" \
   "$ROOT/Input/WRX-Tune-Check.html"
 find "$ROOT/release" "$ROOT/Input" -maxdepth 1 -type f \
@@ -56,7 +76,16 @@ rm -f "$ZIP"
   cd "$STAGE"
   zip -r "$ZIP" "$FILE"
 )
+
+if command -v docker >/dev/null 2>&1; then
+  docker build -t "wrxtoolbox:${VERSION}" "$STAGE/$FILE"
+  echo "Docker image wrxtoolbox:${VERSION}"
+  echo "Serve it with: docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:${VERSION}"
+else
+  echo "Docker is not installed. The release Dockerfile is ready to build later."
+fi
+
 rm -rf "$STAGE"
 
 echo "Built $ZIP"
-ls -lh "$ZIP" "$ROOT/release/${FILE}.html"
+ls -lh "$ZIP" "$ROOT/release/${FILE}.html" "$ROOT/release/Dockerfile"
