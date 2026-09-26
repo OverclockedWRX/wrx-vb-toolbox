@@ -23,6 +23,10 @@ Obvious problems should be shown to the user, however, some things can get misse
 - Load **sample logs** anytime to try the review, including fictional 2nd and 3rd gear wide-open pulls
 - Multi-file sessions open in tabs so you can compare pulls side by side
 
+### OBD2 code lookup
+- Type a scanner code and read a short meaning
+- Subaru-named codes are marked separately from generic SAE wording
+
 ### Wheel / tire
 - Compare a proposed wheel and tire setup to **stock**
 - Drag a **3D six-spoke** preview to turn the wheels and see diameter, width, and offset

@@ -4,6 +4,7 @@ import { ReviewBatch, type FileSession } from "@/components/review-batch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ObdLookup } from "@/components/obd-lookup";
 import { VinDecoder, type VinVehicleHint } from "@/components/vin-decoder";
 import { WheelTireCalculator } from "@/components/wheel-tire-calculator";
 import { requirementList } from "@/lib/columns";
@@ -25,7 +26,7 @@ import {
 import { defaultSettings, type PowerSettings } from "@/lib/types";
 import { APP_NAME, APP_VERSION } from "@/lib/version";
 
-type MainTab = "logs" | "tires";
+type MainTab = "logs" | "tires" | "obd";
 
 export function Dashboard() {
   const [mainTab, setMainTab] = useState<MainTab>("logs");
@@ -138,7 +139,7 @@ export function Dashboard() {
                 <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">VB WRX · 2022–2026</p>
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{APP_NAME}</h1>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Two tools in one page. Use the tabs below to switch between log review and the wheel / tire calculator. Nothing is uploaded.
+                  Three tools in one page. Use the tabs below to switch between log review, the wheel / tire calculator, and OBD2 code lookup. Nothing is uploaded.
                 </p>
               </div>
             </div>
@@ -150,7 +151,7 @@ export function Dashboard() {
             >
               <TabsList
                 variant="default"
-                className="relative z-0 grid h-auto min-h-16 w-full grid-cols-2 items-stretch gap-1 overflow-hidden rounded-xl border border-border bg-muted/80 p-1.5 shadow-sm"
+                className="relative z-0 grid h-auto min-h-16 w-full grid-cols-3 items-stretch gap-1 overflow-hidden rounded-xl border border-border bg-muted/80 p-1.5 shadow-sm"
               >
                 <TabsTrigger
                   value="logs"
@@ -171,6 +172,17 @@ export function Dashboard() {
                     <span>Wheel / tire</span>
                     <span className="text-[11px] font-normal tracking-normal text-muted-foreground sm:text-xs">
                       Size & offset calc
+                    </span>
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="obd"
+                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-base font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-lg data-active:shadow-md"
+                >
+                  <span className="flex flex-col items-center gap-0.5 leading-tight">
+                    <span>OBD2 Code Lookup</span>
+                    <span className="text-[11px] font-normal tracking-normal text-muted-foreground sm:text-xs">
+                      What the code means
                     </span>
                   </span>
                 </TabsTrigger>
@@ -439,6 +451,21 @@ export function Dashboard() {
                   vinTrim={vinHint?.trim ?? null}
                 />
 
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    className="h-10 px-4 text-[0.9375rem]"
+                    onClick={() => window.location.reload()}
+                  >
+                    Reset page
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="obd" className="relative z-0 mt-0 space-y-6">
+                <ObdLookup />
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     type="button"

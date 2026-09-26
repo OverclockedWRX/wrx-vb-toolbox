@@ -1,4 +1,4 @@
-﻿WRX Tool Box! v0.7.3
+﻿WRX Tool Box! v0.8.0
 ========================================
 
 This folder needs no install. No Node, no npm, no internet.
