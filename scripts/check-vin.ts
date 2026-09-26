@@ -14,6 +14,12 @@ const localOnly = await decodeVin("JF1VBAL69N9801234");
 assert.equal(localOnly.vin, "JF1VBAL69N9801234");
 assert.ok(localOnly.fields.length > 5, "expected decoded fields");
 assert.ok(localOnly.fields.some((field) => field.key === "ModelYear" && field.value === "2022"));
+assert.ok(localOnly.fields.some((field) => field.key === "SoldIn" && /Canada/.test(field.value) && /Australia/.test(field.value)));
+assert.equal(localOnly.summary?.includes("Built in"), false);
+
+const wrx2024 = await decodeVin("JF1VBAW65R9817173");
+assert.ok(wrx2024.fields.some((field) => field.key === "SoldIn" && /C0 or C5 is Canada/.test(field.value) && /KA is Australia/.test(field.value)));
+assert.equal(wrx2024.summary?.includes("Built in"), false);
 assert.ok(localOnly.summary?.includes("2022") || localOnly.fields.some((field) => field.key === "Model"));
 
 if (localOnly.source === "nhtsa") {

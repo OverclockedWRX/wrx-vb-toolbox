@@ -262,6 +262,25 @@ function nhtsaFields(raw: Record<string, string>, vin: string): VinField[] {
   return ordered;
 }
 
+const SOLD_IN =
+  "Not recorded in the VIN. A WRX sold in the United States, Canada, or Australia is usually built in Japan and uses the same VIN pattern. The sales country is the two-character destination code on the vehicle ID plate (strut tower or front door frame): U4, U5, or U6 is the United States; C0 or C5 is Canada; KA is Australia.";
+
+function isSubaru(vin: string, fields: VinField[]) {
+  if (WMI[vin.slice(0, 3)]) return true;
+  const make = fields.find((item) => item.key === "Make" || item.key === "Manufacturer")?.value ?? "";
+  return /subaru/i.test(make);
+}
+
+/** Sales market is not a VIN field. Point Subaru decodes at the destination code on the ID plate. */
+function withSoldIn(vin: string, fields: VinField[]) {
+  if (!isSubaru(vin, fields)) return fields;
+  const rest = fields.filter((item) => item.key !== "SoldIn");
+  const sold: VinField = { key: "SoldIn", label: "Sold in", value: SOLD_IN };
+  const afterCheck = rest.findIndex((item) => item.key === "CheckDigit");
+  rest.splice(afterCheck >= 0 ? afterCheck + 1 : Math.min(1, rest.length), 0, sold);
+  return rest;
+}
+
 function summaryFrom(fields: VinField[]) {
   const get = (key: string) => fields.find((field) => field.key === key)?.value;
   const year = get("ModelYear");
@@ -328,11 +347,12 @@ export async function decodeVin(raw: string): Promise<VinDecodeResult> {
   try {
     const remote = await fetchNhtsa(vin);
     if (remote && nhtsaLooksUseful(remote)) {
-      const fields = nhtsaFields(remote, vin);
+      const merged = nhtsaFields(remote, vin);
       // Keep local chassis / plant notes when NHTSA left them blank.
       for (const field of local) {
-        if (!fields.some((item) => item.key === field.key)) fields.push(field);
+        if (!merged.some((item) => item.key === field.key)) merged.push(field);
       }
+      const fields = withSoldIn(vin, merged);
       const errorText = String(remote.ErrorText ?? "").trim();
       return {
         vin,
@@ -348,13 +368,14 @@ export async function decodeVin(raw: string): Promise<VinDecodeResult> {
     // Fall through to local decode when offline or the API is unreachable.
   }
 
+  const fields = withSoldIn(vin, local);
   return {
     vin,
-    ok: local.length > 0,
+    ok: fields.length > 0,
     checkDigitOk,
     source: "local",
-    summary: summaryFrom(local),
-    fields: local,
+    summary: summaryFrom(fields),
+    fields,
     error: checkDigitOk
       ? "Online VIN database was unavailable. Showing the structural decode from the VIN characters."
       : "Check digit does not match, and the online VIN database was unavailable. Showing what the VIN characters still imply.",

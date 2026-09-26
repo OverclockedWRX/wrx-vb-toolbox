@@ -36,6 +36,26 @@ const diameterShift = compareSetup(
 );
 assert.ok(diameterShift.fitment.overall === "ok" || diameterShift.fitment.overall === "caution");
 
+const loweredRear = compareSetup(
+  oem18.tire,
+  oem18.wheel,
+  { widthMm: 255, aspect: 40, rimIn: 18 },
+  { widthIn: 9.5, diameterIn: 18, offsetMm: 38 },
+  { frontMm: 0, rearMm: 25.4 },
+);
+assert.equal(loweredRear.fitment.lowered, true);
+assert.ok(loweredRear.fitment.checks.some((check) => check.title === "Rear clearance"));
+assert.notEqual(loweredRear.fitment.overall, "ok");
+
+const mildFront = compareSetup(
+  oem18.tire,
+  oem18.wheel,
+  { widthMm: 245, aspect: 40, rimIn: 18 },
+  { widthIn: 9.5, diameterIn: 18, offsetMm: 38 },
+  { frontMm: 25.4, rearMm: 0 },
+);
+assert.equal(mildFront.fitment.checks.find((check) => check.title === "Front clearance")?.level, "ok");
+
 const tooWide = compareSetup(
   oem18.tire,
   oem18.wheel,

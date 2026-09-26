@@ -23,6 +23,10 @@ Obvious problems should be shown to the user, however, some things can get misse
 - Load **sample logs** anytime to try the review, including fictional 2nd and 3rd gear wide-open pulls
 - Multi-file sessions open in tabs so you can compare pulls side by side
 
+### VIN decoder
+- Paste a 17-character VIN for year, trim, plant, and other details
+- The sales country is not in the VIN. The decoder explains the destination code on the vehicle ID plate
+
 ### OBD2 code lookup
 - Type a scanner code and read a short meaning
 - Subaru-named codes are marked separately from generic SAE wording
@@ -31,18 +35,17 @@ Obvious problems should be shown to the user, however, some things can get misse
 - Compare a proposed wheel and tire setup to **stock**
 - Drag a **3D six-spoke** preview to turn the wheels and see diameter, width, and offset
 - See diameter change, sidewall, poke, and speedometer error
-- Fitment guidance for **stock ride height** (lowered cars not covered)
+- Fitment guidance for stock height and for a lowered car, with separate front and rear drop. The numbers are estimates from owner reports such as r/wrx_vb
 
 ### Shared helpers
-- **VIN decoder** — paste your VIN for year, trim, and related details
-- **Car preset** — pick market, year, and trim to load stock weight and tire size for both tools
+- **Car preset** — sits above the tabs. Pick market, year, and trim to load stock weight and tire size for both tools. Filling it from a VIN is planned for when the sales country can be determined
 - **Dark mode** — switch themes; your choice is remembered in this browser
 
 ## How to use it
 
-1. Open `wrxtoolbox0.8.1.html` (from the release zip)
+1. Open `wrxtoolbox0.10.1.html` (from the release zip)
 2. Read the short disclaimer and continue
-3. Use **Log review** or **Wheel / tire**
-4. Optionally set VIN and/or car preset, then load logs or enter wheel sizes
+3. Optionally set the car preset above the tabs
+4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
 
 Created by Scott Myers · MIT License

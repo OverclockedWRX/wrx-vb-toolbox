@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
 import { TireCompareGraphic } from "@/components/tire-compare-graphic";
 import {
+  MAX_DROP_MM,
+  MM_PER_INCH,
+  clampDropMm,
   compareSetup,
   parseTireSize,
   type CompareResult,
   type FitmentLevel,
+  type RideDrop,
 } from "@/lib/wheel-math";
 import {
   CENTER_BORE_MM,
@@ -117,6 +121,9 @@ export function WheelTireCalculator({ presetYear, presetTrim, vinYear, vinTrim }
   const [manualStock, setManualStock] = useState<Draft | null>(null);
   const [manualPackageId, setManualPackageId] = useState<string | null>(null);
   const [proposed, setProposed] = useState<Draft>(() => packageToDraft(STOCK_PACKAGES.premium18));
+  const [dropUnit, setDropUnit] = useState<"in" | "mm">("in");
+  const [frontDropMm, setFrontDropMm] = useState(0);
+  const [rearDropMm, setRearDropMm] = useState(0);
 
   const stock = manualStock ?? packageToDraft(autoPackage.pkg);
   const activePackageId = manualPackageId ?? autoPackage.pkg.id;
@@ -127,9 +134,10 @@ export function WheelTireCalculator({ presetYear, presetTrim, vinYear, vinTrim }
   const proposedTire = draftToTire(proposed);
   const proposedWheel = draftToWheel(proposed);
 
+  const ride: RideDrop = { frontMm: frontDropMm, rearMm: rearDropMm };
   const comparison: CompareResult | null =
     stockTire && stockWheel && proposedTire && proposedWheel
-      ? compareSetup(stockTire, stockWheel, proposedTire, proposedWheel)
+      ? compareSetup(stockTire, stockWheel, proposedTire, proposedWheel, ride)
       : null;
 
   function useAutoStock() {
@@ -154,10 +162,20 @@ export function WheelTireCalculator({ presetYear, presetTrim, vinYear, vinTrim }
           bore {CENTER_BORE_MM} mm, lug thread {LUG_THREAD}.
         </p>
         <p className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-950 dark:text-amber-100">
-          Sizes that fit are for <strong className="font-semibold">stock ride height only</strong>. Lowered
-          cars are not considered.
+          Fitment figures are <strong className="font-semibold">estimates only</strong>. They come from owner
+          reports on r/wrx_vb and similar forums, not from a measurement of your car. Tire brand, camber,
+          passengers, and bumps change the result.
         </p>
       </div>
+
+      <RideHeightControl
+        unit={dropUnit}
+        onUnit={setDropUnit}
+        frontMm={frontDropMm}
+        rearMm={rearDropMm}
+        onFront={setFrontDropMm}
+        onRear={setRearDropMm}
+      />
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted-foreground">Stock reference:</span>
@@ -231,6 +249,109 @@ export function WheelTireCalculator({ presetYear, presetTrim, vinYear, vinTrim }
       )}
     </div>
   );
+}
+
+function RideHeightControl({
+  unit,
+  onUnit,
+  frontMm,
+  rearMm,
+  onFront,
+  onRear,
+}: {
+  unit: "in" | "mm";
+  onUnit: (unit: "in" | "mm") => void;
+  frontMm: number;
+  rearMm: number;
+  onFront: (mm: number) => void;
+  onRear: (mm: number) => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-card/40 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Ride height</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            How far the car sits below stock, front and rear. 0 is stock height. The slider and the box edit the same drop.
+          </p>
+        </div>
+        <div className="flex gap-1 text-xs">
+          <button type="button" className={chipClass(unit === "in")} onClick={() => onUnit("in")}>
+            Inches
+          </button>
+          <button type="button" className={chipClass(unit === "mm")} onClick={() => onUnit("mm")}>
+            Millimeters
+          </button>
+        </div>
+      </div>
+      <DropRow key={`front-${unit}`} label="Front" mm={frontMm} unit={unit} onChange={onFront} />
+      <DropRow key={`rear-${unit}`} label="Rear" mm={rearMm} unit={unit} onChange={onRear} />
+    </div>
+  );
+}
+
+function DropRow({
+  label,
+  mm,
+  unit,
+  onChange,
+}: {
+  label: string;
+  mm: number;
+  unit: "in" | "mm";
+  onChange: (mm: number) => void;
+}) {
+  const [text, setText] = useState(() => formatDropInput(mm, unit));
+  const [focused, setFocused] = useState(false);
+  const shown = focused ? text : formatDropInput(mm, unit);
+  const other = unit === "in" ? `${mm.toFixed(0)} mm` : `${(mm / MM_PER_INCH).toFixed(2)} in`;
+
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="flex items-baseline justify-between gap-2 text-sm">
+        <span>{label}</span>
+        <span className="text-xs text-muted-foreground">{other} below stock</span>
+      </span>
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          min={0}
+          max={MAX_DROP_MM}
+          step={unit === "mm" ? 1 : 0.5}
+          value={mm}
+          aria-label={`${label} drop`}
+          onChange={(event) => onChange(clampDropMm(Number(event.target.value)))}
+          className="h-2 min-w-0 flex-1 accent-foreground"
+        />
+        <input
+          type="number"
+          min={0}
+          max={unit === "mm" ? MAX_DROP_MM : MAX_DROP_MM / MM_PER_INCH}
+          step={unit === "mm" ? 1 : 0.05}
+          value={shown}
+          aria-label={`${label} drop in ${unit === "mm" ? "millimeters" : "inches"}`}
+          onFocus={() => {
+            setText(formatDropInput(mm, unit));
+            setFocused(true);
+          }}
+          onBlur={() => setFocused(false)}
+          onChange={(event) => {
+            const next = event.target.value;
+            setText(next);
+            const parsed = Number(next);
+            if (Number.isFinite(parsed)) onChange(clampDropMm(unit === "mm" ? parsed : parsed * MM_PER_INCH));
+          }}
+          className="h-9 w-24 rounded-md border border-border bg-background px-2 font-mono text-sm"
+        />
+        <span className="w-8 text-xs text-muted-foreground">{unit}</span>
+      </div>
+    </label>
+  );
+}
+
+function formatDropInput(mm: number, unit: "in" | "mm") {
+  if (unit === "mm") return String(Math.round(mm));
+  return (mm / MM_PER_INCH).toFixed(2);
 }
 
 function SetupCard({
@@ -367,7 +488,7 @@ function Results({
   return (
     <div className="space-y-3">
       <div className={`rounded-lg border px-3 py-2 text-sm ${toneBox(fitment.overall)}`}>
-        <p className="font-medium">{overallLabel(fitment.overall)}</p>
+        <p className="font-medium">{overallLabel(fitment.overall, fitment.lowered)}</p>
         <p className="mt-1 text-xs leading-5 opacity-90">{fitment.disclaimer}</p>
       </div>
 
@@ -422,7 +543,7 @@ function Results({
         {fitment.checks.map((check) => (
           <li key={check.title} className={`rounded-md border px-3 py-2 text-sm ${toneBox(check.level)}`}>
             <p className="font-medium">
-              {check.title} · {levelWord(check.level)}
+              {check.title} · {check.status ?? levelWord(check.level)}
             </p>
             <p className="mt-0.5 text-xs leading-5 opacity-90">{check.detail}</p>
           </li>
@@ -454,7 +575,12 @@ function levelWord(level: FitmentLevel) {
   return "outside usual stock-height range";
 }
 
-function overallLabel(level: FitmentLevel) {
+function overallLabel(level: FitmentLevel, lowered: boolean) {
+  if (lowered) {
+    if (level === "ok") return "Often reported to clear at this drop";
+    if (level === "caution") return "Owner reports are mixed at this drop";
+    return "Often reported to rub at this drop";
+  }
   if (level === "ok") return "Within common stock-height fitment";
   if (level === "caution") return "Usable with caveats at stock height";
   return "Outside usual stock-height fitment";

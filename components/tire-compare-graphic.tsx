@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function TireCompareGraphic({ stockTire, stockWheel, proposedTire, proposedWheel }: Props) {
-  const [graphic, setGraphic] = useState<GraphicMode>("3d");
+  const [graphic, setGraphic] = useState<GraphicMode>("diagram");
   const [mode, setMode] = useState<ViewMode>("side-by-side");
   const uid = useId().replace(/:/g, "");
 

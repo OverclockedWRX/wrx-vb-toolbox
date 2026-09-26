@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObdLookup } from "@/components/obd-lookup";
-import { VinDecoder, type VinVehicleHint } from "@/components/vin-decoder";
+import { VinDecoder, type VinDecodeState } from "@/components/vin-decoder";
 import { WheelTireCalculator } from "@/components/wheel-tire-calculator";
 import { requirementList } from "@/lib/columns";
 import { EMBEDDED_SAMPLES } from "@/lib/embedded-samples";
@@ -26,7 +26,7 @@ import {
 import { defaultSettings, type PowerSettings } from "@/lib/types";
 import { APP_NAME, APP_VERSION } from "@/lib/version";
 
-type MainTab = "logs" | "tires" | "obd";
+type MainTab = "logs" | "tires" | "vin" | "obd";
 
 export function Dashboard() {
   const [mainTab, setMainTab] = useState<MainTab>("logs");
@@ -44,14 +44,22 @@ export function Dashboard() {
   const [market, setMarket] = useState<Market | "">("");
   const [carYear, setCarYear] = useState<number | "">("");
   const [carId, setCarId] = useState("");
-  const [vinHint, setVinHint] = useState<VinVehicleHint | null>(null);
+  const [vinDecode, setVinDecode] = useState<VinDecodeState>({
+    hasVin: false,
+    busy: false,
+    vin: "",
+    result: null,
+    hint: null,
+  });
   const lastPack = useRef<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const selectedCar = findPreset(carId || null);
   const yearOptions = market ? yearsForMarket(market) : [];
   const trimOptions = market && carYear !== "" ? presetsFor(market, carYear) : [];
-  const onVinHint = useCallback((hint: VinVehicleHint | null) => setVinHint(hint), []);
+  const onVinDecoded = useCallback((state: VinDecodeState) => {
+    setVinDecode(state);
+  }, []);
 
   function loadCarPreset(id: string) {
     setCarId(id);
@@ -139,10 +147,32 @@ export function Dashboard() {
                 <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">VB WRX · 2022–2026</p>
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{APP_NAME}</h1>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Three tools in one page. Use the tabs below to switch between log review, the wheel / tire calculator, and OBD2 code lookup. Nothing is uploaded.
+                  Four tools in one page. Set the car preset here, then use the tabs for log review, the wheel / tire calculator, the VIN decoder, and OBD2 code lookup. Nothing is uploaded.
                 </p>
               </div>
             </div>
+
+            <CarPresetBlock
+              market={market}
+              carYear={carYear}
+              carId={carId}
+              yearOptions={yearOptions}
+              trimOptions={trimOptions}
+              selectedCar={selectedCar}
+              onMarket={(next) => {
+                setMarket(next);
+                setCarYear("");
+                setCarId("");
+              }}
+              onYear={(next) => {
+                setCarYear(next);
+                setCarId("");
+              }}
+              onTrim={(id) => {
+                if (id) loadCarPreset(id);
+                else setCarId("");
+              }}
+            />
 
             <Tabs
               value={mainTab}
@@ -151,11 +181,11 @@ export function Dashboard() {
             >
               <TabsList
                 variant="default"
-                className="relative z-0 grid h-auto min-h-16 w-full grid-cols-3 items-stretch gap-1 overflow-hidden rounded-xl border border-border bg-muted/80 p-1.5 shadow-sm"
+                className="relative z-0 grid h-auto min-h-16 w-full grid-cols-2 items-stretch gap-1 overflow-hidden rounded-xl border border-border bg-muted/80 p-1.5 shadow-sm sm:grid-cols-4"
               >
                 <TabsTrigger
                   value="logs"
-                  className="h-14 min-h-14 after:hidden rounded-lg px-3 text-base font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:text-lg data-active:shadow-md"
+                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-sm font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-base data-active:shadow-md"
                 >
                   <span className="flex flex-col items-center gap-0.5 leading-tight">
                     <span>Log review</span>
@@ -166,7 +196,7 @@ export function Dashboard() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="tires"
-                  className="h-14 min-h-14 after:hidden rounded-lg px-3 text-base font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:text-lg data-active:shadow-md"
+                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-sm font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-base data-active:shadow-md"
                 >
                   <span className="flex flex-col items-center gap-0.5 leading-tight">
                     <span>Wheel / tire</span>
@@ -176,8 +206,19 @@ export function Dashboard() {
                   </span>
                 </TabsTrigger>
                 <TabsTrigger
+                  value="vin"
+                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-sm font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-base data-active:shadow-md"
+                >
+                  <span className="flex flex-col items-center gap-0.5 leading-tight">
+                    <span>VIN decoder</span>
+                    <span className="text-[11px] font-normal tracking-normal text-muted-foreground sm:text-xs">
+                      Year, trim, plant
+                    </span>
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
                   value="obd"
-                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-base font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-lg data-active:shadow-md"
+                  className="h-14 min-h-14 after:hidden rounded-lg px-2 text-sm font-semibold tracking-tight sm:h-16 sm:min-h-16 sm:px-3 sm:text-base data-active:shadow-md"
                 >
                   <span className="flex flex-col items-center gap-0.5 leading-tight">
                     <span>OBD2 Code Lookup</span>
@@ -187,31 +228,6 @@ export function Dashboard() {
                   </span>
                 </TabsTrigger>
               </TabsList>
-
-              <div className="relative z-0 space-y-4">
-                <VinDecoder onVehicleHint={onVinHint} />
-                <CarPresetBlock
-                  market={market}
-                  carYear={carYear}
-                  carId={carId}
-                  yearOptions={yearOptions}
-                  trimOptions={trimOptions}
-                  selectedCar={selectedCar}
-                  onMarket={(next) => {
-                    setMarket(next);
-                    setCarYear("");
-                    setCarId("");
-                  }}
-                  onYear={(next) => {
-                    setCarYear(next);
-                    setCarId("");
-                  }}
-                  onTrim={(id) => {
-                    if (id) loadCarPreset(id);
-                    else setCarId("");
-                  }}
-                />
-              </div>
 
               <TabsContent value="logs" className="relative z-0 mt-0 space-y-6">
                 <div
@@ -378,6 +394,9 @@ export function Dashboard() {
 
                 <details className="text-sm text-muted-foreground">
                   <summary className="cursor-pointer">Channels a full review needs</summary>
+                  <p className="mt-3 max-w-3xl leading-6">
+                    Turn these monitors on in the COBB Accessport before you record a log. The review reads each one from the CSV. If any of them is missing, that log cannot be reviewed.
+                  </p>
                   <ul className="mt-3 flex flex-col gap-2">
                     {requirementList().map((column) => (
                       <li key={column.label}>
@@ -441,16 +460,31 @@ export function Dashboard() {
 
               <TabsContent value="tires" className="relative z-0 mt-0 space-y-6">
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Compare a proposed wheel and tire to stock. Stock size follows the VIN or car preset above when set. Pick sizes from the lists or type them by hand. Fitment notes are for stock ride height only.
+                  Compare a proposed wheel and tire to stock. Stock size follows the car preset above, or a VIN decoded on the VIN decoder tab. Pick sizes from the lists or type them by hand. Set a front and rear drop if the car is lowered. Fitment notes are estimates from owner reports.
                 </p>
 
                 <WheelTireCalculator
                   presetYear={presetYear}
                   presetTrim={presetTrim}
-                  vinYear={vinHint?.year ?? null}
-                  vinTrim={vinHint?.trim ?? null}
+                  vinYear={vinDecode.hint?.year ?? null}
+                  vinTrim={vinDecode.hint?.trim ?? null}
                 />
 
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    className="h-10 px-4 text-[0.9375rem]"
+                    onClick={() => window.location.reload()}
+                  >
+                    Reset page
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="vin" className="relative z-0 mt-0 space-y-6">
+                <VinDecoder onDecoded={onVinDecoded} />
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     type="button"
@@ -533,6 +567,9 @@ function CarPresetBlock({
         <p className="text-sm font-medium">Car preset</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
           Pick market, year, and trim. Log review uses curb weight and road-load numbers. The wheel calculator uses the trim to set stock tire and wheel size.
+        </p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Filling this preset from a VIN is planned. It will be added when a decode can tell the country where the car was sold.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">

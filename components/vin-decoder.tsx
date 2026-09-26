@@ -7,6 +7,14 @@ export type VinVehicleHint = {
   summary: string | null;
 };
 
+export type VinDecodeState = {
+  hasVin: boolean;
+  busy: boolean;
+  vin: string;
+  result: VinDecodeResult | null;
+  hint: VinVehicleHint | null;
+};
+
 function hintFromResult(result: VinDecodeResult | null): VinVehicleHint | null {
   if (!result || !result.fields.length) return null;
   const yearRaw = result.fields.find((field) => field.key === "ModelYear")?.value;
@@ -19,7 +27,7 @@ function hintFromResult(result: VinDecodeResult | null): VinVehicleHint | null {
   };
 }
 
-export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicleHint | null) => void }) {
+export function VinDecoder({ onDecoded }: { onDecoded?: (state: VinDecodeState) => void }) {
   const inputId = useId();
   const [raw, setRaw] = useState("");
   const [open, setOpen] = useState(false);
@@ -30,11 +38,12 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
 
   useEffect(() => {
     if (!cleaned) {
-      onVehicleHint?.(null);
+      onDecoded?.({ hasVin: false, busy: false, vin: "", result: null, hint: null });
       return;
     }
 
     let cancelled = false;
+    onDecoded?.({ hasVin: true, busy: true, vin: cleaned, result: null, hint: null });
     const timer = window.setTimeout(() => {
       setBusy(true);
       void decodeVin(cleaned).then((decoded) => {
@@ -42,7 +51,13 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
         setResult(decoded);
         setBusy(false);
         setOpen(true);
-        onVehicleHint?.(hintFromResult(decoded));
+        onDecoded?.({
+          hasVin: true,
+          busy: false,
+          vin: cleaned,
+          result: decoded,
+          hint: hintFromResult(decoded),
+        });
       });
     }, 280);
 
@@ -50,7 +65,7 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [cleaned, onVehicleHint]);
+  }, [cleaned, onDecoded]);
 
   const activeResult = hasVin ? result : null;
   const detailsOpen = hasVin && open;
@@ -60,7 +75,7 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
       <div>
         <p className="text-sm font-medium">VIN decoder</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          Optional. Paste a 17-character VIN to decode make, model, year, trim, plant, and other details. Uses the NHTSA vPIC database when online, with a local structural fallback offline.
+          Optional. Paste a 17-character VIN to decode make, model, year, trim, plant, and other details. The VIN does not say whether the car was sold in the United States, Canada, or Australia. Uses the NHTSA vPIC database when online, with a local structural fallback offline.
         </p>
       </div>
       <label className="flex flex-col gap-1" htmlFor={inputId}>
@@ -79,7 +94,7 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
               setResult(null);
               setBusy(false);
               setOpen(false);
-              onVehicleHint?.(null);
+              onDecoded?.({ hasVin: false, busy: false, vin: "", result: null, hint: null });
             }
           }}
           className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-sm tracking-wide uppercase"
@@ -131,7 +146,7 @@ export function VinDecoder({ onVehicleHint }: { onVehicleHint?: (hint: VinVehicl
                     {activeResult.fields.map((field) => (
                       <tr key={field.key} className="border-b border-border/70 last:border-0">
                         <td className="px-3 py-2 align-top text-muted-foreground">{field.label}</td>
-                        <td className="px-3 py-2 align-top font-mono text-xs sm:text-sm">{field.value}</td>
+                        <td className={field.key === "SoldIn" ? "px-3 py-2 align-top text-sm leading-5" : "px-3 py-2 align-top font-mono text-xs sm:text-sm"}>{field.value}</td>
                       </tr>
                     ))}
                   </tbody>

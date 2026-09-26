@@ -65,13 +65,32 @@ export type FitmentCheck = {
   level: FitmentLevel;
   title: string;
   detail: string;
+  /** Shown after the title. Stock-height checks leave this empty and use the stock wording. */
+  status?: string;
 };
 
 export type FitmentReport = {
   overall: FitmentLevel;
   checks: FitmentCheck[];
   disclaimer: string;
+  lowered: boolean;
 };
+
+export const MM_PER_INCH = 25.4;
+/** About 2.5 in. Owner posts past ~2 in are sparse, so the slider stops here. */
+export const MAX_DROP_MM = 2.5 * MM_PER_INCH;
+
+export type RideDrop = {
+  frontMm: number;
+  rearMm: number;
+};
+
+export const STOCK_RIDE: RideDrop = { frontMm: 0, rearMm: 0 };
+
+export function clampDropMm(mm: number) {
+  if (!Number.isFinite(mm)) return 0;
+  return Math.min(MAX_DROP_MM, Math.max(0, mm));
+}
 
 function worse(a: FitmentLevel, b: FitmentLevel): FitmentLevel {
   const rank = { ok: 0, caution: 1, outside: 2 } as const;
@@ -79,11 +98,20 @@ function worse(a: FitmentLevel, b: FitmentLevel): FitmentLevel {
 }
 
 /**
- * Stock-height-only fitment notes from community reports
- * (r/wrx_vb, ThreePiece, rimlist). Not a guarantee — tire brand and
- * alignment still matter. Lowered cars are not considered.
+ * Fitment notes from owner reports (r/wrx_vb, ThreePiece, rimlist).
+ * Stock-height bands are the baseline. A drop tightens them with a rough
+ * estimate: the rear is treated as slightly tighter because posts mention
+ * rear liner and cladding contact more often than the front.
+ * Not a measurement of any one car.
  */
-export function assessStockHeightFitment(wheel: WheelSpec, tire: TireSpec, stockTire: TireSpec): FitmentReport {
+export function assessStockHeightFitment(
+  wheel: WheelSpec,
+  tire: TireSpec,
+  stockTire: TireSpec,
+  ride: RideDrop = STOCK_RIDE,
+): FitmentReport {
+  const frontMm = clampDropMm(ride.frontMm);
+  const rearMm = clampDropMm(ride.rearMm);
   const checks: FitmentCheck[] = [];
   const g = STOCK_HEIGHT_GUIDANCE;
 
@@ -212,15 +240,68 @@ export function assessStockHeightFitment(wheel: WheelSpec, tire: TireSpec, stock
     });
   }
 
+  const lowered = frontMm >= 1 || rearMm >= 1;
+  if (lowered) {
+    checks.push(dropCheck("Front", frontMm, wheel, tire, 1));
+    checks.push(dropCheck("Rear", rearMm, wheel, tire, 1.25));
+  }
+
   let overall: FitmentLevel = "ok";
   for (const check of checks) overall = worse(overall, check.level);
+
+  const dropText = lowered
+    ? ` Front is ${formatDrop(frontMm)} below stock and rear is ${formatDrop(rearMm)} below stock.`
+    : " Ride height is stock. Enter a front or rear drop to include lowering.";
 
   return {
     overall,
     checks,
+    lowered,
     disclaimer:
-      "Fitment notes are for stock ride height only. Lowered cars are not considered. Community reports (r/wrx_vb, ThreePiece, rimlist) vary by tire brand, camber, and load — this is a guide, not a guarantee.",
+      "Fitment numbers are estimates only, gathered from owner reports such as r/wrx_vb, fitment threads, and rim guides. They are not a measurement of your car. Tire brand, camber, passengers, and bumps change the result." +
+      dropText +
+      " This is a guide, not a guarantee.",
   };
+}
+
+/**
+ * Rough clearance score from forum patterns, not a fender scan.
+ * Anchors: about 1 in of drop on 18×9.5 ET38 with a 245/40 is often reported clear;
+ * a 255/40 at that drop is mixed; around 1.5–2 in the rear is where light rub shows up
+ * on 265/35 or 255/35, especially with weight in the back.
+ * `endBias` is 1 at the front and 1.25 at the rear.
+ */
+function dropCheck(end: "Front" | "Rear", dropMm: number, wheel: WheelSpec, tire: TireSpec, endBias: number): FitmentCheck {
+  const inches = dropMm / MM_PER_INCH;
+  const flushLip = outerLipFromHubMm({ widthIn: 9.5, diameterIn: 18, offsetMm: 38 });
+  const extraPokeMm = Math.max(0, outerLipFromHubMm(wheel) - flushLip);
+  const extraWidthMm = Math.max(0, tire.widthMm - 255);
+  const referenceDiameter = 18 * MM_PER_INCH + 2 * 245 * 0.4;
+  const extraHeightMm = Math.max(0, tireDiameterMm(tire) - referenceDiameter);
+  const risk = inches * endBias + extraPokeMm / 25 + extraWidthMm / 28 + extraHeightMm / 40;
+
+  const level: FitmentLevel = risk < 1.4 ? "ok" : risk < 2.6 ? "caution" : "outside";
+  const band =
+    level === "ok"
+      ? "Similar setups are often reported to clear at this drop."
+      : level === "caution"
+        ? "Owner reports are mixed here: some cars clear, and some rub the liner or cladding on bumps."
+        : "Drops and sizes in this range are often reported to rub, especially over bumps or with people in the car.";
+  const endNote =
+    end === "Rear"
+      ? "Rear posts mention liner and cladding contact more often than the front."
+      : "Front posts mention rub less often than the rear at the same drop.";
+
+  return {
+    level,
+    title: `${end} clearance`,
+    status: level === "ok" ? "often reported clear" : level === "caution" ? "reports are mixed" : "often reported to rub",
+    detail: `${end} is ${formatDrop(dropMm)} below stock. ${band} ${endNote}`,
+  };
+}
+
+function formatDrop(mm: number) {
+  return `${(mm / MM_PER_INCH).toFixed(2)} in (${mm.toFixed(0)} mm)`;
 }
 
 export type CompareResult = {
@@ -246,6 +327,7 @@ export function compareSetup(
   stockWheel: WheelSpec,
   proposedTire: TireSpec,
   proposedWheel: WheelSpec,
+  ride: RideDrop = STOCK_RIDE,
 ): CompareResult {
   const stockDiameterMm = tireDiameterMm(stockTire);
   const proposedDiameterMm = tireDiameterMm(proposedTire);
@@ -271,6 +353,6 @@ export function compareSetup(
     proposedInnerMm,
     innerDeltaMm: proposedInnerMm - stockInnerMm,
     speedAt60: indicatedSpeedMph(60, proposedTire, stockTire),
-    fitment: assessStockHeightFitment(proposedWheel, proposedTire, stockTire),
+    fitment: assessStockHeightFitment(proposedWheel, proposedTire, stockTire, ride),
   };
 }
