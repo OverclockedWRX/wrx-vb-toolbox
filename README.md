@@ -25,6 +25,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ### VIN decoder
 - Paste a 17-character VIN for year, trim, plant, and other details
+- Recalls and service bulletins from NHTSA are listed above the decoder. Recalls are red. Service bulletins are yellow and link to the NHTSA document
 - The sales country is not in the VIN. The decoder explains the destination code on the vehicle ID plate
 
 ### OBD2 code lookup
@@ -43,7 +44,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ## How to use it
 
-1. Open `wrxtoolbox0.11.0.html` (from the release zip)
+1. Open `wrxtoolbox0.12.2.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Optionally set the car preset above the tabs
 4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
@@ -53,8 +54,8 @@ Obvious problems should be shown to the user, however, some things can get misse
 The release folder includes a `Dockerfile`. It only serves the HTML file. Logs still stay in each browser.
 
 ```bash
-docker build -t wrxtoolbox:0.11.0 .
-docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.11.0
+docker build -t wrxtoolbox:0.12.2 .
+docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.12.2
 ```
 
 Open http://127.0.0.1:8080 on that computer, or http://&lt;that-computer-ip&gt;:8080 from another device on the same network. Stop it with `docker rm -f wrxtoolbox`.

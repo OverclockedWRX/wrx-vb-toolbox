@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObdLookup } from "@/components/obd-lookup";
 import { VinDecoder, type VinDecodeState } from "@/components/vin-decoder";
+import { VinSafetyNotices } from "@/components/vin-safety";
 import { WheelTireCalculator } from "@/components/wheel-tire-calculator";
 import { requirementList } from "@/lib/columns";
 import { EMBEDDED_SAMPLES } from "@/lib/embedded-samples";
@@ -484,6 +485,7 @@ export function Dashboard() {
               </TabsContent>
 
               <TabsContent value="vin" className="relative z-0 mt-0 space-y-6">
+                <VinSafetyNotices result={vinDecode.result} decoding={vinDecode.busy} />
                 <VinDecoder onDecoded={onVinDecoded} />
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
