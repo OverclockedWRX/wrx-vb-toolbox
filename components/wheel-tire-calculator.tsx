@@ -95,20 +95,20 @@ function applyTireText(draft: Draft, text: string): Draft {
 
 export function WheelTireCalculator({ presetYear, presetTrim, vinYear, vinTrim }: Props) {
   const autoPackage = useMemo(() => {
-    const fromVin = resolveStockPackage(vinYear, vinTrim);
-    if (fromVin && (vinYear || vinTrim)) {
-      return {
-        pkg: fromVin,
-        sourceLabel: [vinYear, vinTrim].filter(Boolean).join(" ") || "VIN",
-        kind: "vin" as const,
-      };
-    }
     const fromPreset = resolveStockPackage(presetYear, presetTrim);
-    if (fromPreset && (presetYear || presetTrim)) {
+    if (fromPreset && presetTrim) {
       return {
         pkg: fromPreset,
         sourceLabel: [presetYear, presetTrim].filter(Boolean).join(" ") || "Car preset",
         kind: "preset" as const,
+      };
+    }
+    const fromVin = resolveStockPackage(vinYear, vinTrim);
+    if (fromVin && vinTrim) {
+      return {
+        pkg: fromVin,
+        sourceLabel: [vinYear, vinTrim].filter(Boolean).join(" ") || "VIN",
+        kind: "vin" as const,
       };
     }
     return {

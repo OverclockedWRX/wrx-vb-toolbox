@@ -104,7 +104,9 @@ export function resolveStockPackage(year: number | null, trim: string | null): S
   if (/\bgt\s+sportswagon\b/i.test(text)) return STOCK_PACKAGES.premium18;
   if (/\bts\s+sportswagon\b/i.test(text)) return STOCK_PACKAGES.ts19;
 
-  if (/^base$/i.test(text) || /^wrx$/i.test(text)) return STOCK_PACKAGES.base17;
+  if (/^(subaru\s+)?wrx$/i.test(text)) return null;
+
+  if (/^base$/i.test(text)) return STOCK_PACKAGES.base17;
 
   if (BASE_TRIM.test(text) && !EIGHTEEN_TRIM.test(text) && !NINETEEN_TRIM.test(text)) {
     return STOCK_PACKAGES.base17;

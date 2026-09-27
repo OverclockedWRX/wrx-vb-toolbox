@@ -10,6 +10,8 @@ const oem18 = STOCK_PACKAGES.premium18;
 const diameter = tireDiameterMm(oem18.tire);
 assert.ok(Math.abs(diameter - (18 * 25.4 + 2 * 245 * 0.4)) < 0.01);
 
+assert.equal(resolveStockPackage(2024, "WRX"), null);
+assert.equal(resolveStockPackage(2024, "Subaru WRX"), null);
 assert.equal(resolveStockPackage(2024, "Base")?.id, "base17");
 assert.equal(resolveStockPackage(2024, "Premium")?.id, "premium18");
 assert.equal(resolveStockPackage(2024, "Limited")?.id, "premium18");

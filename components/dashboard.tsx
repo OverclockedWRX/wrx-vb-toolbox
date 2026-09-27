@@ -73,7 +73,13 @@ export function Dashboard() {
   }
 
   function addFiles(list: FileList | File[]) {
-    const incoming = [...list].filter((file) => file.name.toLowerCase().endsWith(".csv") || file.type.includes("csv") || file.type === "");
+    const all = [...list];
+    const incoming = all.filter((file) => file.name.toLowerCase().endsWith(".csv"));
+    if (all.length > 0 && incoming.length === 0) {
+      setError("Only a file whose name ends in .csv can be reviewed.");
+      setSampleNote(null);
+      return;
+    }
     setFiles((current) => {
       const keys = new Set(current.map(fileKey));
       return [...current, ...incoming.filter((file) => !keys.has(fileKey(file)))];
@@ -403,7 +409,7 @@ export function Dashboard() {
                 <details className="text-sm text-muted-foreground">
                   <summary className="cursor-pointer">Channels a full review needs</summary>
                   <p className="mt-3 max-w-3xl leading-6">
-                    Turn these monitors on in the COBB Accessport before you record a log. The review reads each one from the CSV. If any of them is missing, that log cannot be reviewed.
+                    Turn these monitors on in the COBB Accessport before you record a log. The review reads each one from the CSV in °F, psi, and mph. If any of them is missing, that log cannot be reviewed.
                   </p>
                   <ul className="mt-3 flex flex-col gap-2">
                     {requirementList().map((column) => (

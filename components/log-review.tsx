@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { PullCharts, type Trace } from "@/components/pull-chart";
 import { ReviewHeader } from "@/components/review-header";
 import { healthBorder, worseHealth, type Health } from "@/lib/assess";
+import type { SafeWindow } from "@/lib/limits";
 import { airflowPeaks, roadPeaks } from "@/lib/power";
 import type { SessionReview } from "@/lib/session";
 import { formatSigned, gearLabel, type PowerSettings, type Pull, type Review } from "@/lib/types";
@@ -71,7 +72,7 @@ export function LogReview({
           </div>
           <div className="max-w-3xl space-y-3">
             <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">Log review</p>
-            <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{headline(report)}</h1>
+            <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{headline(report, session.limits)}</h1>
             <p className="text-base leading-7 text-muted-foreground sm:text-lg">{summary(report)}</p>
           </div>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -356,15 +357,22 @@ function widestPull(pulls: Pull[]) {
   return [...pulls].sort((a, b) => b.rpm1 - b.rpm0 - (a.rpm1 - a.rpm0))[0];
 }
 
-function headline(report: Review) {
+function headline(report: Review, limits: SafeWindow) {
   if (!report.onBoost) return "These logs have no wide-open load to judge.";
-  if (report.turbo && report.onBoost.afrMax <= 12) {
-    return `Wide-open AFR stayed between ${report.onBoost.afrMin.toFixed(2)} and ${report.onBoost.afrMax.toFixed(2)}.`;
+  const { afrMin, afrMax } = report.onBoost;
+  if (afrMax > limits.absoluteMax) {
+    return `Wide-open AFR reached ${afrMax.toFixed(2)}, past the ${limits.absoluteMax.toFixed(2)} stop for ${limits.octane} octane.`;
   }
-  if (report.turbo && report.onBoost.afrMax > 12.2) {
-    return `Wide-open AFR reached ${report.onBoost.afrMax.toFixed(2)} under boost.`;
+  if (afrMin < limits.absoluteMin) {
+    return `Wide-open AFR went to ${afrMin.toFixed(2)}, richer than the ${limits.absoluteMin.toFixed(2)} floor.`;
   }
-  return `Wide-open AFR ran from ${report.onBoost.afrMin.toFixed(2)} to ${report.onBoost.afrMax.toFixed(2)}.`;
+  if (afrMax > limits.preferredMax) {
+    return `Wide-open AFR reached ${afrMax.toFixed(2)}, lean of the ${limits.preferredMax.toFixed(2)} preferred limit.`;
+  }
+  if (afrMin < limits.preferredMin) {
+    return `Wide-open AFR went to ${afrMin.toFixed(2)}, richer than the ${limits.preferredMin.toFixed(2)} preferred floor.`;
+  }
+  return `Wide-open AFR stayed inside ${limits.preferredMin.toFixed(2)}–${limits.preferredMax.toFixed(2)} for ${limits.octane} octane.`;
 }
 
 function summary(report: Review) {
