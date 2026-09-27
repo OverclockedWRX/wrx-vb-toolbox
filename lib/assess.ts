@@ -393,7 +393,7 @@ export function assess(
       score -= 24;
       alerts.push({
         title: "Fuel pressure is low under boost",
-        problem: `Direct-injection pressure under boost is down to about ${Math.round(low).toLocaleString()} psi.`,
+        problem: `Direct-injection pressure under boost is down to about ${Math.round(low).toLocaleString()} psi. Under about 1,500 psi is an F.`,
         remedy: "Check fuel level, the high-pressure pump, and the tuner’s pressure targets.",
       });
       noticed.push(`Fuel pressure under boost fell to about ${Math.round(low).toLocaleString()} psi.`);
@@ -409,7 +409,7 @@ export function assess(
     score -= 12;
     alerts.push({
       title: "Coolant is hot",
-      problem: `Coolant reached ${coolantMax.toFixed(0)}°F.`,
+      problem: `Coolant reached ${coolantMax.toFixed(0)}°F. Above 230°F is an F.`,
       remedy: "Let the car cool and skip repeated wide-open pulls until coolant stays under control.",
     });
     noticed.push(`Coolant reached ${coolantMax.toFixed(0)}°F.`);
@@ -421,7 +421,7 @@ export function assess(
     score -= 12;
     alerts.push({
       title: "Oil is hot",
-      problem: `Oil reached ${oilMax.toFixed(0)}°F during these logs.`,
+      problem: `Oil reached ${oilMax.toFixed(0)}°F during these logs. Above 250°F is an F.`,
       remedy: "Let the oil cool and avoid back-to-back pulls.",
     });
     noticed.push(`Oil reached ${oilMax.toFixed(0)}°F.`);

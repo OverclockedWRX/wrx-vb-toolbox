@@ -155,7 +155,7 @@ export function Dashboard() {
                 <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground uppercase">VB WRX · 2022–2026</p>
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{APP_NAME}</h1>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Four tools in one page. Set the car preset here, then use the tabs for log review, the wheel / tire calculator, the VIN decoder, and OBD2 code lookup. Nothing is uploaded.
+                  Four tools in one page. Set the car preset here, then use the tabs for log review, the wheel / tire calculator, the VIN decoder, and OBD2 code lookup. Logs stay on this computer. The VIN tab contacts NHTSA when you use it.
                 </p>
               </div>
             </div>

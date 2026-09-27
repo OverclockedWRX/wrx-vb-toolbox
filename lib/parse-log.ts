@@ -13,6 +13,7 @@ export type RawSample = PullPoint & {
   coolant: number | null;
   oil: number | null;
   manifold: number | null;
+  intake: number | null;
   ks2: number | null;
   rough: number | null;
   baro: number | null;
@@ -127,6 +128,7 @@ export function parseLog(name: string, text: string): ParsedLog {
     corr: findColumn(headers, COLUMN_TESTS.corr),
     coolant: findColumn(headers, COLUMN_TESTS.coolant),
     oil: findColumn(headers, (header) => header.includes("oil temp")),
+    intake: findColumn(headers, (header) => header.includes("intake temp") && !header.includes("manifold")),
     manifold: findColumn(headers, (header) => header.includes("intake temp manifold")),
     ks2: findColumn(headers, (header) => header.includes("ks noise cyl 2")),
     rough1: findColumn(headers, (header) => header.includes("roughness cyl 1")),
@@ -170,6 +172,7 @@ export function parseLog(name: string, text: string): ParsedLog {
       coolant: num(fields, columns.coolant),
       oil: num(fields, columns.oil),
       manifold: num(fields, columns.manifold),
+      intake: num(fields, columns.intake),
       ks2: num(fields, columns.ks2),
       rough: roughs.length ? Math.max(...roughs) : null,
       baro: num(fields, columns.baro),

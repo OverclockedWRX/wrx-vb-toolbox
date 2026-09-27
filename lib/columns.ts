@@ -104,11 +104,6 @@ export const REQUIRED_COLUMNS: RequiredColumn[] = [
     test: COLUMN_TESTS.learn3,
   },
   {
-    label: "AF Correction 1",
-    why: "Short-term fuel trim shows whether the ECU is still chasing the mixture during the log.",
-    test: COLUMN_TESTS.corr,
-  },
-  {
     label: "Calculated Load",
     why: "Grams per revolution is the airflow channel used for the horsepower estimate and for load context.",
     test: COLUMN_TESTS.load,

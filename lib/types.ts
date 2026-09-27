@@ -38,6 +38,7 @@ export type Pull = {
   dutyMax: number | null;
   oil: number | null;
   manifold: number | null;
+  intake: number | null;
   points: PullPoint[];
 };
 
@@ -86,6 +87,7 @@ export type LogSummary = {
   coolantMax: number | null;
   oilMax: number | null;
   manifoldMax: number | null;
+  intakeMax: number | null;
   learn1Median: number | null;
   learn3Start: number | null;
   learn3End: number | null;
@@ -120,6 +122,7 @@ export type Review = {
   peakBoost: number | null;
   targetAtPeak: number | null;
   learning1Median: number | null;
+  correctionMedian: number | null;
   learning3Final: number | null;
   learningSteps: LearningStep[];
   learningLog: string | null;

@@ -84,6 +84,7 @@ function summarizeLog(log: ParsedLog, pullCount: number): LogSummary {
     coolantMax,
     oilMax: maxOf(samples.map((sample) => sample.oil)),
     manifoldMax: maxOf(samples.map((sample) => sample.manifold)),
+    intakeMax: maxOf(samples.map((sample) => sample.intake)),
     learn1Median: learn1.length ? percentile(learn1, 50) : null,
     learn3Start: learn3.length ? learn3[0] : null,
     learn3End: learn3.length ? learn3[learn3.length - 1] : null,
@@ -221,6 +222,7 @@ export function analyze(logs: ParsedLog[]): Review {
         dutyMax: Math.max(...group.map((sample) => sample.duty)) || null,
         oil: maxOf(group.map((sample) => sample.oil)),
         manifold: maxOf(group.map((sample) => sample.manifold)),
+        intake: maxOf(group.map((sample) => sample.intake)),
         points: group.map(toPoint),
       });
     }
@@ -233,6 +235,7 @@ export function analyze(logs: ParsedLog[]): Review {
 
   const dams = all.map((row) => row.sample.dam).filter((value): value is number => value !== null);
   const learn1 = all.map((row) => row.sample.learn1).filter((value): value is number => value !== null);
+  const correction = all.map((row) => row.sample.corr).filter((value): value is number => value !== null);
   const steps: LearningStep[] = [];
   let learningLog: string | null = null;
   let widest = 0;
@@ -279,6 +282,7 @@ export function analyze(logs: ParsedLog[]): Review {
     peakBoost,
     targetAtPeak,
     learning1Median: learn1.length ? percentile(learn1, 50) : null,
+    correctionMedian: correction.length ? percentile(correction, 50) : null,
     learning3Final: learn3Values.length ? learn3Values[learn3Values.length - 1] : null,
     learningSteps: steps,
     learningLog,

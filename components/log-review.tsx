@@ -405,7 +405,8 @@ function AfrCopy({ session }: { session: SessionReview }) {
 function TrimCopy({ report }: { report: Review }) {
   const learn1 = report.learning1Median;
   const learn3 = report.learning3Final;
-  if (learn1 === null && learn3 === null) {
+  const correction = report.correctionMedian;
+  if (learn1 === null && learn3 === null && correction === null) {
     return <p className="text-sm leading-6 text-muted-foreground">These logs do not include AF Learning channels.</p>;
   }
   return (
@@ -414,6 +415,7 @@ function TrimCopy({ report }: { report: Review }) {
         Positive fuel trim means the ECU is adding fuel. Negative means it is removing fuel.
         {learn1 !== null ? ` AF Learning 1, across the loaded files, has a median of ${formatSigned(learn1, 1)}%.` : ""}
         {learn3 !== null ? ` AF Learning 3 finished at ${formatSigned(learn3, 1)}%.` : ""}
+        {correction !== null ? ` AF Correction 1, the short-term trim, has a median of ${formatSigned(correction, 1)}%.` : ""}
       </p>
       <p className="text-sm leading-6 text-muted-foreground">
         {(learn3 !== null && Math.abs(learn3) >= 10) || (learn1 !== null && Math.abs(learn1) >= 10)
@@ -455,6 +457,7 @@ function HardwareCopy({ report }: { report: Review }) {
   const oil = maxNum(report.logs.map((log) => log.oilMax));
   const coolant = maxNum(report.logs.map((log) => log.coolantMax));
   const manifold = maxNum(report.logs.map((log) => log.manifoldMax));
+  const intake = maxNum(report.logs.map((log) => log.intakeMax));
   const duty = maxNum(report.pulls.map((pull) => pull.dutyMax));
   const fp = minNum(report.pulls.map((pull) => pull.fpMin));
   return (
@@ -472,7 +475,7 @@ function HardwareCopy({ report }: { report: Review }) {
         {duty !== null ? `Injector duty peaks at ${duty.toFixed(1)}%. ` : ""}
         {coolant !== null ? `Coolant reached ${coolant.toFixed(0)}°F. ` : ""}
         {oil !== null ? `Oil reached ${oil.toFixed(0)}°F. ` : ""}
-        {manifold !== null ? `Manifold air reached ${manifold.toFixed(0)}°F.` : ""}
+        {manifold !== null ? `Manifold air reached ${manifold.toFixed(0)}°F.` : intake !== null ? `Intake air reached ${intake.toFixed(0)}°F.` : ""}
       </p>
     </>
   );
@@ -513,6 +516,7 @@ function LearningStrip({ report }: { report: Review }) {
 }
 
 function PullFacts({ pull }: { pull: Pull }) {
+  const degrees = (value: number | null) => (value === null ? "—" : `${value.toFixed(0)}°F`);
   const facts: [string, string][] = [
     ["Duration", `${(pull.t1 - pull.t0).toFixed(2)} s`],
     ["Speed", formatSpeedRange(pull.speed0, pull.speed1)],
@@ -521,7 +525,10 @@ function PullFacts({ pull }: { pull: Pull }) {
     ["Timing on load", `${pull.timingMin.toFixed(1)}° to ${pull.timingMax.toFixed(1)}°`],
     ["Fuel pressure min", pull.fpMin === null ? "—" : `${Math.round(pull.fpMin).toLocaleString()} psi`],
     ["Injector duty", pull.dutyMax === null ? "—" : `${pull.dutyMax.toFixed(1)}%`],
-    ["Manifold / oil", `${pull.manifold === null ? "—" : `${pull.manifold.toFixed(0)}°F`} / ${pull.oil === null ? "—" : `${pull.oil.toFixed(0)}°F`}`],
+    [
+      pull.manifold !== null ? "Manifold / oil" : "Intake / oil",
+      `${degrees(pull.manifold ?? pull.intake)} / ${degrees(pull.oil)}`,
+    ],
   ];
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,6 +1,6 @@
 # WRX Tool Box!
 
-Independent tools for **2022–2026 Subaru WRX (VB)** owners. Open the HTML file in your browser — no install, no account, and your files never leave your computer.
+Independent tools for **2022–2026 Subaru WRX (VB)** owners. Open the HTML file in your browser — no install and no account. Logs stay on this computer. The VIN tab contacts NHTSA when you use it.
 
 **Not affiliated with Subaru of America, Subaru Corporation, or COBB Tuning.** Subaru, WRX, Accessport, and COBB are trademarks of their respective owners.
 
@@ -23,6 +23,7 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 - See charts for pulls, fueling, and estimated power
 - Load **sample logs** anytime to try the review, including fictional 2nd and 3rd gear wide-open pulls
 - Multi-file sessions open in tabs so you can compare pulls side by side
+- Fuel pressure under about 1,500 psi, coolant above 230°F, and oil above 250°F are an F. Octane is read from the tune name only when the number sits next to “oct”, such as `93oct`. The boost target is the first “N psi” between 5 and 35
 
 ### VIN decoder
 - Paste a 17-character VIN for year, trim, plant, and other details
@@ -45,7 +46,7 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 
 ## How to use it
 
-1. Open `wrxtoolbox0.13.0.html` (from the release zip)
+1. Open `wrxtoolbox0.13.2.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Optionally set the car preset above the tabs
 4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
@@ -55,8 +56,8 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 The release folder includes a `Dockerfile`. It only serves the HTML file. Logs still stay in each browser.
 
 ```bash
-docker build -t wrxtoolbox:0.13.0 .
-docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.13.0
+docker build -t wrxtoolbox:0.13.2 .
+docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.13.2
 ```
 
 Open http://127.0.0.1:8080 on that computer, or http://&lt;that-computer-ip&gt;:8080 from another device on the same network. Stop it with `docker rm -f wrxtoolbox`.

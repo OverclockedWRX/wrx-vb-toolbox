@@ -52,7 +52,7 @@ function brackets(value: string) {
 }
 
 function octaneIn(value: string): Octane | null {
-  const match = value.match(/(?:^|[^0-9])(87|89|91|92|93)(?![0-9])/);
+  const match = value.match(/(?:^|[^0-9])(87|89|91|92|93)\s*oct/i);
   if (!match) return null;
   const octane = Number(match[1]);
   return isOctane(octane) ? octane : null;

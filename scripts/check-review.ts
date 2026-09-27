@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { parseLog } from "../lib/parse-log";
+import { parseTune } from "../lib/tune";
 import { SAMPLE_PACKS } from "../lib/sample-packs";
 import { buildFileSessions, buildSession } from "../lib/session";
 
@@ -229,6 +230,24 @@ const droppedDam = buildSession(
 assert(droppedDam.ok && droppedDam.grade.letter === "F", "short knock with dropped DAM is still F");
 if (droppedDam.ok) {
   assert(droppedDam.alerts.some((alert) => alert.title === "Knock under load"), "dropped DAM does not get the noise exception");
+}
+
+const named = parseTune("AP Info:[AP3-SUB-006][2024 WRX][Reflash: Checklist Map v91 - 16psi 93oct.ptm]");
+assert(named.octane === 93, "octane is read from 93oct, not from v91");
+assert(named.targetPsi === 16, "boost target stays the first psi figure");
+const revisionOnly = parseTune("AP Info:[AP3-SUB-006][2024 WRX][Reflash: Checklist Map v91 - 16psi.ptm]");
+assert(revisionOnly.octane === null, "a revision number is not octane");
+
+const noCorrectionHeaders = baseHeaders.filter((header) => !header.startsWith("AF Correction"));
+const noCorrection = buildSession(
+  [miniLog("no-correction.csv", noCorrectionHeaders, [0, 0.05, 0.1].map((t) => sampleAt(t)))],
+  "tune",
+);
+assert(noCorrection.ok, "AF Correction is optional");
+if (noCorrection.ok) {
+  assert(noCorrection.review.logs[0]?.intakeMax === 80, "Intake Temp is shown when manifold is absent");
+  assert(noCorrection.review.logs[0]?.manifoldMax === null, "manifold stays empty without that column");
+  assert(noCorrection.review.correctionMedian === null, "missing AF Correction has no median");
 }
 
 console.log("checks passed");
