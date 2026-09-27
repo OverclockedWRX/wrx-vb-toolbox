@@ -104,6 +104,11 @@ export const REQUIRED_COLUMNS: RequiredColumn[] = [
     test: COLUMN_TESTS.learn3,
   },
   {
+    label: "AF Correction 1",
+    why: "Short-term fuel trim shows whether the ECU is still chasing the mixture during the log. The review prints this next to the learned trims.",
+    test: COLUMN_TESTS.corr,
+  },
+  {
     label: "Calculated Load",
     why: "Grams per revolution is the airflow channel used for the horsepower estimate and for load context.",
     test: COLUMN_TESTS.load,
@@ -136,9 +141,9 @@ export const REQUIRED_COLUMNS: RequiredColumn[] = [
 ];
 
 export const INTAKE_REQUIREMENT: RequiredColumn = {
-  label: "Intake Temp or Intake Temp Manifold",
-  why: "Charge temperature changes knock margin. Either Intake Temp or Intake Temp Manifold satisfies this.",
-  test: COLUMN_TESTS.intake,
+  label: "Intake Temp",
+  why: "This is air temperature at the intake, before the manifold. The review shows it on its own. Intake Temp Manifold is shown too when that column is logged.",
+  test: (header) => COLUMN_TESTS.intake(header) && !header.includes("manifold"),
 };
 
 export function requirementList(): RequiredColumn[] {

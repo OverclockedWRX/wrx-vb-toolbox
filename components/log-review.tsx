@@ -105,11 +105,12 @@ export function LogReview({
             />
           </dl>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Peak HP" value={peaks ? String(Math.round(peaks.hp)) : "—"} detail={peaks ? `${Math.round(peaks.hpRpm).toLocaleString()} rpm · crank` : "Need airflow"} />
+            <Stat label="Peak HP" value={peaks ? String(Math.round(peaks.hp)) : "—"} detail={peaks ? `${Math.round(peaks.hpRpm).toLocaleString()} rpm · not a dyno` : "Need airflow"} />
             <Stat label="Peak TQ" value={peaks ? String(Math.round(peaks.tq)) : "—"} detail={peaks ? `${Math.round(peaks.tqRpm).toLocaleString()} rpm · lb-ft` : "Need airflow"} />
             <Stat label="Peak WHP" value={peaks ? String(Math.round(peaks.whp)) : "—"} detail={peaks ? `${settings.drivetrainLossPct}% drivetrain loss` : "Need airflow"} />
             <Stat label="Peak WTQ" value={peaks ? String(Math.round(peaks.wtq)) : "—"} detail={peaks ? `${Math.round(peaks.wtqRpm).toLocaleString()} rpm · lb-ft` : "Need airflow"} />
           </dl>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">Peak HP is an airflow estimate, not a dyno.</p>
         </div>
       </header>
 
@@ -278,6 +279,11 @@ export function LogReview({
         <section className={`grid gap-6 rounded-xl border-2 p-5 sm:p-6 lg:grid-cols-[1fr_16rem] ${healthBorder(session.grade.health.trims)}`}>
           <div className="space-y-3">
             <h2 className="text-xl font-semibold tracking-tight">Fuel trims</h2>
+            <dl className="grid grid-cols-3 gap-3">
+              <Stat label="AF Learning 1" value={signedPercent(report.learning1Median)} detail="Closed-loop cruise" health={session.grade.health.trims} />
+              <Stat label="AF Learning 3" value={signedPercent(report.learning3Final)} detail="Learned load trim" health={session.grade.health.trims} />
+              <Stat label="AF Correction 1" value={signedPercent(report.correctionMedian)} detail="Short-term trim" health={session.grade.health.trims} />
+            </dl>
             <TrimCopy report={report} />
           </div>
           <LearningStrip report={report} />
@@ -415,7 +421,7 @@ function TrimCopy({ report }: { report: Review }) {
         Positive fuel trim means the ECU is adding fuel. Negative means it is removing fuel.
         {learn1 !== null ? ` AF Learning 1, across the loaded files, has a median of ${formatSigned(learn1, 1)}%.` : ""}
         {learn3 !== null ? ` AF Learning 3 finished at ${formatSigned(learn3, 1)}%.` : ""}
-        {correction !== null ? ` AF Correction 1, the short-term trim, has a median of ${formatSigned(correction, 1)}%.` : ""}
+        {correction !== null ? ` AF Correction 1 median is ${formatSigned(correction, 1)}%, shown above.` : " AF Correction 1 was not in this log."}
       </p>
       <p className="text-sm leading-6 text-muted-foreground">
         {(learn3 !== null && Math.abs(learn3) >= 10) || (learn1 !== null && Math.abs(learn1) >= 10)
@@ -475,7 +481,8 @@ function HardwareCopy({ report }: { report: Review }) {
         {duty !== null ? `Injector duty peaks at ${duty.toFixed(1)}%. ` : ""}
         {coolant !== null ? `Coolant reached ${coolant.toFixed(0)}°F. ` : ""}
         {oil !== null ? `Oil reached ${oil.toFixed(0)}°F. ` : ""}
-        {manifold !== null ? `Manifold air reached ${manifold.toFixed(0)}°F.` : intake !== null ? `Intake air reached ${intake.toFixed(0)}°F.` : ""}
+        {intake !== null ? `Intake air reached ${intake.toFixed(0)}°F. ` : ""}
+        {manifold !== null ? `Manifold air reached ${manifold.toFixed(0)}°F.` : ""}
       </p>
     </>
   );
@@ -540,6 +547,10 @@ function PullFacts({ pull }: { pull: Pull }) {
       ))}
     </dl>
   );
+}
+
+function signedPercent(value: number | null) {
+  return value === null ? "—" : `${formatSigned(value, 1)}%`;
 }
 
 function Stat({ label, value, detail, health = "good" }: { label: string; value: string; detail: string; health?: Health }) {

@@ -1,6 +1,6 @@
 {
   "name": "wrx-tune-check",
-  "version": "0.13.2",
+  "version": "0.14.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "pack": "bash scripts/pack-zip.sh",
     "embed-samples": "python3 scripts/embed-samples.py",
-    "check": "tsx scripts/check-review.ts && tsx scripts/check-presets.ts && tsx scripts/check-vin.ts && tsx scripts/check-vin-preset.ts && tsx scripts/check-vin-safety.ts && tsx scripts/check-wheels.ts",
+    "check": "tsx scripts/check-grades.ts && tsx scripts/check-review.ts && tsx scripts/check-presets.ts && tsx scripts/check-vin.ts && tsx scripts/check-vin-preset.ts && tsx scripts/check-vin-safety.ts && tsx scripts/check-wheels.ts",
     "lint": "eslint ."
   },
   "dependencies": {

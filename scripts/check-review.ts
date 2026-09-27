@@ -202,36 +202,6 @@ if (!emptyAfr.ok) {
   assert(/column is present/i.test(afr[0]?.why ?? ""), "blank wideband says the column is present");
 }
 
-const longKnock = buildSession(
-  [
-    miniLog(
-      "long-knock.csv",
-      baseHeaders,
-      Array.from({ length: 12 }, (_, index) => sampleAt(index * 0.05, { "Feedback Knock (deg)": -2.11 })),
-    ),
-  ],
-  "tune",
-);
-assert(longKnock.ok && longKnock.grade.letter === "F", "longer under-load knock is F");
-if (longKnock.ok) {
-  assert(longKnock.alerts.some((alert) => alert.title === "Knock under load"), "longer knock raises the under-load alert");
-}
-
-const droppedDam = buildSession(
-  [
-    miniLog(
-      "dropped-dam.csv",
-      baseHeaders,
-      [0, 0.05, 0.1].map((t) => sampleAt(t, { "Dyn Adv Mult (DAM)": 0.75, "Feedback Knock (deg)": -1.05 })),
-    ),
-  ],
-  "tune",
-);
-assert(droppedDam.ok && droppedDam.grade.letter === "F", "short knock with dropped DAM is still F");
-if (droppedDam.ok) {
-  assert(droppedDam.alerts.some((alert) => alert.title === "Knock under load"), "dropped DAM does not get the noise exception");
-}
-
 const named = parseTune("AP Info:[AP3-SUB-006][2024 WRX][Reflash: Checklist Map v91 - 16psi 93oct.ptm]");
 assert(named.octane === 93, "octane is read from 93oct, not from v91");
 assert(named.targetPsi === 16, "boost target stays the first psi figure");
@@ -243,11 +213,20 @@ const noCorrection = buildSession(
   [miniLog("no-correction.csv", noCorrectionHeaders, [0, 0.05, 0.1].map((t) => sampleAt(t)))],
   "tune",
 );
-assert(noCorrection.ok, "AF Correction is optional");
-if (noCorrection.ok) {
-  assert(noCorrection.review.logs[0]?.intakeMax === 80, "Intake Temp is shown when manifold is absent");
-  assert(noCorrection.review.logs[0]?.manifoldMax === null, "manifold stays empty without that column");
-  assert(noCorrection.review.correctionMedian === null, "missing AF Correction has no median");
+assert(!noCorrection.ok, "AF Correction is required");
+if (!noCorrection.ok) {
+  assert(noCorrection.missing.some((item) => item.label === "AF Correction 1"), "missing AF Correction is listed");
+}
+
+const intakeOnly = buildSession(
+  [miniLog("intake-only.csv", baseHeaders, [0, 0.05, 0.1].map((t) => sampleAt(t, { "AF Correction 1 (%)": 0.4 })))],
+  "tune",
+);
+assert(intakeOnly.ok, "Intake Temp without manifold should review");
+if (intakeOnly.ok) {
+  assert(intakeOnly.review.logs[0]?.intakeMax === 80, "non-manifold intake temperature is kept");
+  assert(intakeOnly.review.logs[0]?.manifoldMax === null, "manifold stays empty without that column");
+  assert(intakeOnly.review.correctionMedian === 0.4, "AF Correction median is available to the review");
 }
 
 console.log("checks passed");

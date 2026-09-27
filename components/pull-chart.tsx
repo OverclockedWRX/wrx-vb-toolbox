@@ -353,7 +353,7 @@ function PowerChart({
         <Read term="RPM" value={hovered ? `${Math.round(hovered.point.rpm).toLocaleString()}` : "Click the curve"} />
         <Read term="HP / WHP" value={hovered ? `${Math.round(hovered.point.hp)} / ${Math.round(hovered.point.whp)}` : "—"} />
         <Read term="TQ / WTQ" value={hovered ? `${Math.round(hovered.point.tq)} / ${Math.round(hovered.point.wtq)}` : "—"} />
-        <Read term="Source" value="Airflow estimate" />
+        <Read term="Source" value="Estimate, not a dyno" />
       </dl>
     </figure>
   );
