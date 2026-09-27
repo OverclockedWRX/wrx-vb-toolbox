@@ -36,6 +36,7 @@ export function Dashboard() {
   const [weightText, setWeightText] = useState("");
   const [smoothing, setSmoothing] = useState(5);
   const [reviews, setReviews] = useState<FileSession[] | null>(null);
+  const [gradedFuel, setGradedFuel] = useState<FuelChoice | null>(null);
   const [fuel, setFuel] = useState<FuelChoice>("tune");
   const [reviewId, setReviewId] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +97,7 @@ export function Dashboard() {
       setFiles(loaded);
       setSampleNote(`${pack.label}. ${pack.detail}`);
       setReviews(null);
+      setGradedFuel(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load the sample logs.");
     } finally {
@@ -125,6 +127,7 @@ export function Dashboard() {
       return;
     }
     setReviews(buildFileSessions(parsed, fuel));
+    setGradedFuel(fuel);
     setReviewId((current) => current + 1);
     setError(null);
     setBusy(false);
@@ -132,6 +135,10 @@ export function Dashboard() {
   }
 
   const needsOctane = Boolean(reviews?.some((item) => !item.session.ok && item.session.needsOctane));
+  const gradeStale = Boolean(reviews?.length && gradedFuel !== null && gradedFuel !== fuel);
+  let reviewLabel = "Start review";
+  if (busy) reviewLabel = "Reading logs…";
+  else if (gradeStale) reviewLabel = "Start review again";
   const presetYear = selectedCar?.year ?? (carYear === "" ? null : carYear);
   const presetTrim = selectedCar?.trim ?? null;
 
@@ -299,7 +306,7 @@ export function Dashboard() {
                     onClick={startReview}
                     disabled={!files.length || busy}
                   >
-                    {busy ? "Reading logs…" : "Start review"}
+                    {reviewLabel}
                   </Button>
                   <Button
                     type="button"
@@ -317,6 +324,7 @@ export function Dashboard() {
                       onClick={() => {
                         setFiles([]);
                         setReviews(null);
+                        setGradedFuel(null);
                         setSampleNote(null);
                         setError(null);
                       }}
@@ -386,7 +394,6 @@ export function Dashboard() {
                       value={weightText}
                       onChange={(event) => {
                         setWeightText(event.target.value);
-                        setCarId("");
                       }}
                       className={fieldClass}
                     />
@@ -447,6 +454,11 @@ export function Dashboard() {
                 </details>
 
                 <div ref={reviewRef} className="-mx-4 border-t border-border sm:-mx-6">
+                  {gradeStale ? (
+                    <p className="mx-auto max-w-6xl px-4 py-3 text-sm leading-6 text-amber-950 sm:px-6 dark:text-amber-50">
+                      Fuel octane changed, so this grade is out of date. Start the review again to grade with the octane selected now.
+                    </p>
+                  ) : null}
                   {reviews?.length ? (
                     <ReviewBatch
                       key={reviewId}

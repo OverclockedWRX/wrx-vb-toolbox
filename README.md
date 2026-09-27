@@ -6,10 +6,11 @@ Independent tools for **2022–2026 Subaru WRX (VB)** owners. Open the HTML file
 
 
 
-**The COBB AP Log review is done by an algorithm. It DOES NOT have final say over your logs. Sometimes there is legitimate false knock.
-It tries it's best to detect these scenarios but at the end of the day, it's not an AI chatbot, nor an actual human. 
-The Log reviews are meant to be a quick check on things, and that is it. 
-Obvious problems should be shown to the user, however, some things can get missed. Always have your tuner review your logs.**
+**The log review is a fixed checklist. It does not have the last word on a log. Your tuner does.**
+
+It is not an AI chatbot and it is not a human. It is a spot check for obvious problems. Some things can still be missed. Always have your tuner review the logs.
+
+**Knock.** Feedback knock while under load (at least 80% pedal and at least 5 psi) is an **F**, except a short blip no worse than **−1.41°** that lasts no more than **0.30 seconds** when DAM stays at **1.00** and fine knock learn stays flatter than **−0.70°**. That exception is noted as possible sensor noise. It is not a clean pass. Off-boost feedback knock is a note. Dropped DAM, or fine knock learn at −0.70° or below, is still called out.
 
 
 
@@ -44,7 +45,7 @@ Obvious problems should be shown to the user, however, some things can get misse
 
 ## How to use it
 
-1. Open `wrxtoolbox0.12.2.html` (from the release zip)
+1. Open `wrxtoolbox0.13.0.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Optionally set the car preset above the tabs
 4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
@@ -54,8 +55,8 @@ Obvious problems should be shown to the user, however, some things can get misse
 The release folder includes a `Dockerfile`. It only serves the HTML file. Logs still stay in each browser.
 
 ```bash
-docker build -t wrxtoolbox:0.12.2 .
-docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.12.2
+docker build -t wrxtoolbox:0.13.0 .
+docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.13.0
 ```
 
 Open http://127.0.0.1:8080 on that computer, or http://&lt;that-computer-ip&gt;:8080 from another device on the same network. Stop it with `docker rm -f wrxtoolbox`.

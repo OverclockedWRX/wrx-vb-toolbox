@@ -41,6 +41,17 @@ export type GradeResult = {
 
 const ORDER: GradeLetter[] = ["S", "A", "B", "F"];
 
+/** Under load: wide pedal and positive boost. Same cut used for the knock grade. */
+const LOAD_ACCEL = 80;
+const LOAD_BOOST_PSI = 5;
+/**
+ * A short under-load blip no worse than this can be sensor noise when DAM stays at 1.00
+ * and fine knock learn stays flatter than FLAT_FKL. Anything else under load is an F.
+ */
+const NOISE_FBK = -1.41;
+const NOISE_SECONDS = 0.3;
+const FLAT_FKL = -0.7;
+
 const BLURB: Record<GradeLetter, string> = {
   S: "Best case. Wide-open fueling, knock, and trims sit where they should for this tune.",
   A: "Great. Only a small item is off, and nothing here says to stay out of boost.",
@@ -103,6 +114,8 @@ export function assess(
   let fkLoad = 0;
   let fkLoadLog = "";
   let fkLoadDetail = "";
+  let fkLoadCount = 0;
+  let fkLoadSeconds = 0;
   let fkOff = 0;
   let fklMin = 0;
   let fklLog = "";
@@ -113,6 +126,7 @@ export function assess(
   let oilMax = Number.NEGATIVE_INFINITY;
 
   for (const log of logs) {
+    let previousT: number | null = null;
     for (const sample of log.samples) {
       if (sample.dam !== null && sample.dam < damMin) {
         damMin = sample.dam;
@@ -123,12 +137,19 @@ export function assess(
         fklMin = sample.fkl;
         fklLog = log.name;
       }
-      const underLoad = sample.boost >= 5 && sample.accel >= 80;
-      if (sample.fk < 0 && underLoad && sample.fk < fkLoad) {
-        fkLoad = sample.fk;
-        fkLoadLog = log.name;
-        fkLoadDetail = `${sample.fk.toFixed(2)}° in ${log.name} at ${Math.round(sample.rpm).toLocaleString()} rpm and ${sample.boost.toFixed(1)} psi`;
+      const underLoad = sample.boost >= LOAD_BOOST_PSI && sample.accel >= LOAD_ACCEL;
+      if (sample.fk < 0 && underLoad) {
+        const gap = previousT === null ? 0.05 : sample.t - previousT;
+        const dt = Number.isFinite(gap) && gap > 0 ? Math.min(0.2, Math.max(0.05, gap)) : 0.05;
+        fkLoadCount += 1;
+        fkLoadSeconds += dt;
+        if (sample.fk < fkLoad) {
+          fkLoad = sample.fk;
+          fkLoadLog = log.name;
+          fkLoadDetail = `${sample.fk.toFixed(2)}° in ${log.name} at ${Math.round(sample.rpm).toLocaleString()} rpm and ${sample.boost.toFixed(1)} psi`;
+        }
       } else if (sample.fk < fkOff) fkOff = sample.fk;
+      previousT = sample.t;
       for (const [value, label] of [
         [sample.learn1, "AF Learning 1"],
         [sample.learn3, "AF Learning 3"],
@@ -251,13 +272,22 @@ export function assess(
     changes.push("Do not wide-open throttle until DAM and knock are sorted with the tuner.");
   }
 
-  if (fkLoad < 0) {
+  const damHeld = Number.isFinite(damMin) && damMin >= 0.999 && Number.isFinite(damMax) && damMax <= 1.05;
+  const flkFlat = fklMin > FLAT_FKL;
+  const sensorNoise = fkLoad < 0 && damHeld && flkFlat && fkLoad >= NOISE_FBK && fkLoadSeconds <= NOISE_SECONDS;
+  if (sensorNoise) {
+    score -= 3;
+    health.knock = worseHealth(health.knock, "warn");
+    noticed.push(
+      `Feedback knock of ${fkLoad.toFixed(2)}° showed up under load for ${fkLoadSeconds.toFixed(2)} s (${fkLoadCount} sample${fkLoadCount === 1 ? "" : "s"}) in ${fkLoadLog}. DAM stayed at 1.00 and fine knock learn stayed flat, so this short blip is noted as possible sensor noise and is not an F. A tuner still has to confirm it.`,
+    );
+  } else if (fkLoad < 0) {
     safety = true;
     health.knock = "bad";
     score -= fkLoad <= -4 ? 28 : fkLoad <= -2.1 ? 22 : 16;
     alerts.push({
       title: "Knock under load",
-      problem: `Feedback knock hit ${fkLoadDetail}. Timing pulled under boost is treated as real knock until a tuner shows it is sensor noise.`,
+      problem: `Feedback knock hit ${fkLoadDetail} (${fkLoadSeconds.toFixed(2)} s, ${fkLoadCount} sample${fkLoadCount === 1 ? "" : "s"}). Under-load feedback knock is an F unless it is a short blip no worse than ${NOISE_FBK.toFixed(2)}° with DAM still at 1.00 and fine knock learn flatter than ${FLAT_FKL.toFixed(2)}°. This event is outside that exception.`,
       remedy: "Stop wide-open pulls. Confirm the octane matches the map, then send this log to the tuner.",
     });
     noticed.push(`Feedback knock under load reached ${fkLoad.toFixed(2)}° in ${fkLoadLog}.`);
@@ -270,7 +300,7 @@ export function assess(
     );
   }
 
-  if (fklMin <= -0.7) {
+  if (fklMin <= FLAT_FKL) {
     const severe = fklMin <= -2;
     if (severe) {
       safety = true;
@@ -293,7 +323,7 @@ export function assess(
     noticed.push(`Fine knock learn reached ${fklMin.toFixed(2)}°.`);
   }
 
-  if (Number.isFinite(damMin) && damMin >= 0.999 && fkLoad === 0 && fklMin > -0.7) {
+  if (damHeld && fkLoad === 0 && flkFlat) {
     noticed.push("DAM stayed at 1.00, and there was no feedback knock under load.");
   }
 

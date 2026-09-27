@@ -441,7 +441,7 @@ function KnockCopy({ report }: { report: Review }) {
           {report.knock.gear > 0 ? ` in ${gearLabel(report.knock.gear)}` : ""}, {report.knock.rpmMin.toLocaleString()}–{report.knock.rpmMax.toLocaleString()} rpm, boost {report.knock.boostMin.toFixed(2)} to {report.knock.boostMax.toFixed(2)} psi, about {report.knock.accel.toFixed(0)}% pedal, AFR {report.knock.afr.toFixed(2)}.
           {report.knock.ks2Max !== null ? ` Cylinder 2 knock-sensor noise peaked at ${report.knock.ks2Max.toLocaleString()}.` : ""}
           {report.knock.underLoad
-            ? " Timing pulled under boost is worth a look from the tuner."
+            ? " Under load means at least 80% pedal and at least 5 psi. A short blip no worse than -1.41° is noted as possible sensor noise when DAM stays at 1.00 and fine knock learn stays flatter than -0.70°. Deeper, longer, or learned knock is an F."
             : " Knock logged in vacuum at light pedal is often exhaust noise at the sensor, especially with an unequal-length header, when learned timing does not move."}
         </p>
       ) : (

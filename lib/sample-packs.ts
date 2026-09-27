@@ -15,7 +15,7 @@ export const SAMPLE_PACKS: SamplePack[] = [
   {
     id: "a",
     label: "A tier",
-    detail: "Made-up 93-octane wide-open pulls with one small miss. The log is fictional.",
+    detail: "Made-up 93-octane wide-open pulls with one small miss and a brief -1.05° feedback-knock blip. DAM stays at 1.00 and fine knock learn stays flat, so that blip is noted as possible sensor noise. The log is fictional.",
     files: ["sample-a-cruise.csv", "sample-a-pull.csv"],
   },
   {

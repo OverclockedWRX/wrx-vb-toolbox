@@ -1,3 +1,4 @@
+import { COLUMN_TESTS } from "@/lib/columns";
 import type { PullPoint } from "@/lib/types";
 
 export type RawSample = PullPoint & {
@@ -92,42 +93,39 @@ export function parseLog(name: string, text: string): ParsedLog {
     };
   }
   const headers = table[headerIndex];
-  const rpmIndex = findColumn(headers, (header) => header.startsWith("rpm"));
-  const timeIndex = findColumn(headers, (header) => header.startsWith("time"));
-  const mapHeader = headers.find((header) => norm(header).startsWith("ap info")) ?? null;
+  const rpmIndex = findColumn(headers, COLUMN_TESTS.rpm);
+  const timeIndex = findColumn(headers, COLUMN_TESTS.time);
+  const mapHeader = headers.find((header) => COLUMN_TESTS.apInfo(norm(header))) ?? null;
   if (rpmIndex < 0 || timeIndex < 0) {
     return { name: label, headers, map: mapHeader, samples: [], parseError: null };
   }
 
   const columns = {
-    accel: findColumn(headers, (header) => header.includes("accel position")),
+    accel: findColumn(headers, COLUMN_TESTS.accel),
     throttle: findColumn(headers, (header) => header.includes("throttle pos")),
-    gear: findColumn(headers, (header) => header.includes("gear position")),
-    boost: findColumn(headers, (header) => header === "boost (psi)" || header === "boost"),
-    tgt: findColumn(headers, (header) => header.includes("target boost")),
-    afr: findColumn(headers, (header) => header.includes("af sens 1")),
-    cmd: findColumn(headers, (header) => header.includes("comm fuel final") || header.includes("fuel final")),
-    timing: findColumn(headers, (header) => header.startsWith("ignition timing")),
-    fp: findColumn(
-      headers,
-      (header) => header.includes("fuel pressure") && !header.includes("target"),
-    ),
+    gear: findColumn(headers, COLUMN_TESTS.gear),
+    boost: findColumn(headers, COLUMN_TESTS.boost),
+    tgt: findColumn(headers, COLUMN_TESTS.targetBoost),
+    afr: findColumn(headers, COLUMN_TESTS.afr),
+    cmd: findColumn(headers, COLUMN_TESTS.cmd),
+    timing: findColumn(headers, COLUMN_TESTS.timing),
+    fp: findColumn(headers, COLUMN_TESTS.fuelPressure),
     duty: findColumn(headers, (header) => header.includes("inj duty")),
-    load: findColumn(headers, (header) => header.includes("calculated load")),
+    load: findColumn(headers, COLUMN_TESTS.load),
     maf: findColumn(
       headers,
       (header) =>
         (header.includes("mass airflow") || header === "maf (g/s)" || header.includes("maf (g/s)")) &&
         !header.includes("freq"),
     ),
-    speed: findColumn(headers, (header) => header.includes("vehicle speed")),
-    dam: findColumn(headers, (header) => header.includes("dyn adv")),
-    fk: findColumn(headers, (header) => header.includes("feedback knock")),
-    fkl: findColumn(headers, (header) => header.includes("fine knock")),
-    learn1: findColumn(headers, (header) => header.includes("af learning 1")),
-    learn3: findColumn(headers, (header) => header.includes("af learning 3")),
-    corr: findColumn(headers, (header) => header.includes("af correction 1")),
-    coolant: findColumn(headers, (header) => header.includes("coolant")),
+    speed: findColumn(headers, COLUMN_TESTS.speed),
+    dam: findColumn(headers, COLUMN_TESTS.dam),
+    fk: findColumn(headers, COLUMN_TESTS.feedbackKnock),
+    fkl: findColumn(headers, COLUMN_TESTS.fineKnock),
+    learn1: findColumn(headers, COLUMN_TESTS.learn1),
+    learn3: findColumn(headers, COLUMN_TESTS.learn3),
+    corr: findColumn(headers, COLUMN_TESTS.corr),
+    coolant: findColumn(headers, COLUMN_TESTS.coolant),
     oil: findColumn(headers, (header) => header.includes("oil temp")),
     manifold: findColumn(headers, (header) => header.includes("intake temp manifold")),
     ks2: findColumn(headers, (header) => header.includes("ks noise cyl 2")),

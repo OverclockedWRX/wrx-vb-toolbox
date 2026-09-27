@@ -274,6 +274,11 @@ def main() -> None:
         lean_at=0.62,
         lean_afr=11.90,
     )
+    # Two samples of -1.05° in third gear. DAM stays 1.00 and fine knock learn stays 0,
+    # so the review should call this sensor noise rather than an F.
+    on_boost = [row for row in a_pulls if row["gear"] == 3 and row["accel"] >= 80 and row["boost"] >= 10]
+    for row in on_boost[30:32]:
+        row["fk"] = -1.05
     write(
         "sample-a-pull.csv",
         "Sample Map Almost Tidy - 16psi 93oct",

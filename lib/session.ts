@@ -1,6 +1,6 @@
 import { assess, type Alert, type FuelStats, type GradeResult } from "@/lib/assess";
 import { analyze } from "@/lib/analyze";
-import { missingRequirements } from "@/lib/columns";
+import { COLUMN_TESTS, columnPresent, missingRequirements } from "@/lib/columns";
 import { isOctane, safeWindow, type Octane, type SafeWindow } from "@/lib/limits";
 import type { ParsedLog } from "@/lib/parse-log";
 import { parseTune, tuneTitle, type TuneInfo } from "@/lib/tune";
@@ -63,34 +63,39 @@ function uniqueOctane(tunes: TuneInfo[]): Octane | null | "mixed" {
 
 function emptyChannels(log: ParsedLog): MissingChannel[] {
   if (log.samples.length < 2) return [];
-  const rows: { label: string; why: string; empty: boolean }[] = [
+  const rows: { label: string; why: string; present: boolean; empty: boolean }[] = [
     {
       label: "AF Sens 1 Ratio",
       why: "The column is present, but every value is blank or zero. A grade without a wideband reading would hide a lean pull.",
+      present: columnPresent(log.headers, COLUMN_TESTS.afr),
       empty: log.samples.every((sample) => sample.afr <= 0),
     },
     {
       label: "Comm Fuel Final",
       why: "The column is present, but the ECU command is blank. Actual AFR cannot be compared with the request.",
+      present: columnPresent(log.headers, COLUMN_TESTS.cmd),
       empty: log.samples.every((sample) => sample.cmd <= 0),
     },
     {
       label: "Boost",
       why: "The column is present, but every value is zero. Idle on this car is vacuum, so an all-zero column is not a real boost trace.",
+      present: columnPresent(log.headers, COLUMN_TESTS.boost),
       empty: log.samples.every((sample) => sample.boost === 0),
     },
     {
       label: "DAM",
       why: "The column is present, but DAM has no numeric values. A knocked log would look clean.",
+      present: columnPresent(log.headers, COLUMN_TESTS.dam),
       empty: log.samples.every((sample) => sample.dam === null),
     },
     {
       label: "Fuel Pressure",
       why: "The column is present, but fuel pressure never reports a number, so the pump check cannot be done.",
+      present: columnPresent(log.headers, COLUMN_TESTS.fuelPressure),
       empty: log.samples.every((sample) => sample.fp <= 0),
     },
   ];
-  return rows.filter((row) => row.empty).map((row) => ({ file: log.name, label: row.label, why: row.why }));
+  return rows.filter((row) => row.present && row.empty).map((row) => ({ file: log.name, label: row.label, why: row.why }));
 }
 
 export function buildSession(logs: ParsedLog[], fuel: FuelChoice): SessionResult {

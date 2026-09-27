@@ -76,4 +76,159 @@ assert(combined.ok && combined.grade.letter === "S", "combined S pack still grad
 
 const names = readdirSync(new URL("../logs/", import.meta.url));
 assert(names.every((name) => name.startsWith("sample-")), `unexpected log files: ${names.join(", ")}`);
+
+const aPull = bestOkGrade("a");
+assert(
+  !aPull.alerts.some((alert) => alert.title === "Knock under load"),
+  "A pull short knock blip is not an F",
+);
+assert(
+  aPull.grade.noticed.some((line) => /sensor noise/i.test(line) && /1\.00/.test(line)),
+  "A pull explains the knock blip as sensor noise with DAM at 1.00",
+);
+
+const AP =
+  "AP Info:[AP3-SUB-006 v0.0.0-1][2024 USDM WRX MT SAMPLE DATA][Reflash: Checklist Map - 16psi 93oct.ptm]";
+
+function row(values: Record<string, string | number>, headers: string[]) {
+  return headers
+    .map((header) => {
+      if (header.startsWith("AP Info")) return "";
+      const key = header.split(" ")[0];
+      return String(values[header] ?? values[key] ?? "");
+    })
+    .join(",");
+}
+
+function miniLog(name: string, headers: string[], samples: Record<string, string | number>[]) {
+  const text = [headers.join(","), ...samples.map((sample) => row(sample, headers))].join("\n");
+  return parseLog(name, text);
+}
+
+const baseHeaders = [
+  "Time (sec)",
+  "RPM (RPM)",
+  "Accel Position (%)",
+  "AF Sens 1 Ratio (AFR)",
+  "Comm Fuel Final (AFR)",
+  "Boost (psi)",
+  "Target Boost Final Rel (psi)",
+  "Dyn Adv Mult (DAM)",
+  "Feedback Knock (deg)",
+  "Fine Knock Learn (deg)",
+  "Ignition Timing (deg)",
+  "AF Learning 1 (%)",
+  "AF Learning 3 (%)",
+  "AF Correction 1 (%)",
+  "Calculated Load (g/rev)",
+  "Gear Position (gear)",
+  "Fuel Pressure (psi)",
+  "Coolant Temp (F)",
+  "Vehicle Speed (mph)",
+  "Intake Temp (F)",
+  AP,
+];
+
+function sampleAt(t: number, overrides: Record<string, string | number> = {}) {
+  return {
+    "Time (sec)": t.toFixed(2),
+    "RPM (RPM)": 4000,
+    "Accel Position (%)": 100,
+    "AF Sens 1 Ratio (AFR)": 11.1,
+    "Comm Fuel Final (AFR)": 11.05,
+    "Boost (psi)": 14,
+    "Target Boost Final Rel (psi)": 16,
+    "Dyn Adv Mult (DAM)": 1,
+    "Feedback Knock (deg)": 0,
+    "Fine Knock Learn (deg)": 0,
+    "Ignition Timing (deg)": 8,
+    "AF Learning 1 (%)": -1,
+    "AF Learning 3 (%)": 2,
+    "AF Correction 1 (%)": 0.4,
+    "Calculated Load (g/rev)": 1.2,
+    "Gear Position (gear)": 3,
+    "Fuel Pressure (psi)": 2200,
+    "Coolant Temp (F)": 190,
+    "Vehicle Speed (mph)": 50,
+    "Intake Temp (F)": 80,
+    ...overrides,
+  };
+}
+
+const damAliasHeaders = baseHeaders.map((header) => (header.startsWith("Dyn Adv") ? "DAM" : header));
+const damAlias = buildSession(
+  [
+    miniLog(
+      "dam-alias.csv",
+      damAliasHeaders,
+      [0, 0.05, 0.1].map((t) => sampleAt(t, { DAM: 1 })),
+    ),
+  ],
+  "tune",
+);
+assert(damAlias.ok, "DAM alias header should review");
+if (damAlias.ok) {
+  assert(damAlias.review.damMin === 1, `DAM alias should read 1.00, got ${damAlias.review.damMin}`);
+  assert(!damAlias.alerts.some((alert) => alert.title === "Knock under load"), "clean DAM alias log is not knock");
+}
+
+const missingAfrHeaders = baseHeaders.filter((header) => !header.startsWith("AF Sens"));
+const missingAfr = buildSession(
+  [miniLog("missing-afr.csv", missingAfrHeaders, [0, 0.05, 0.1].map((t) => sampleAt(t)))],
+  "tune",
+);
+assert(!missingAfr.ok, "missing wideband should refuse");
+if (!missingAfr.ok) {
+  const afr = missingAfr.missing.filter((item) => item.label === "AF Sens 1 Ratio");
+  assert(afr.length === 1, `missing wideband should be listed once, got ${afr.length}`);
+  assert(!/column is present/i.test(afr[0]?.why ?? ""), "a missing column is not an empty column");
+}
+
+const emptyAfr = buildSession(
+  [
+    miniLog(
+      "empty-afr.csv",
+      baseHeaders,
+      [0, 0.05, 0.1].map((t) => sampleAt(t, { "AF Sens 1 Ratio (AFR)": 0 })),
+    ),
+  ],
+  "tune",
+);
+assert(!emptyAfr.ok, "blank wideband should refuse");
+if (!emptyAfr.ok) {
+  const afr = emptyAfr.missing.filter((item) => item.label === "AF Sens 1 Ratio");
+  assert(afr.length === 1, "blank wideband listed once");
+  assert(/column is present/i.test(afr[0]?.why ?? ""), "blank wideband says the column is present");
+}
+
+const longKnock = buildSession(
+  [
+    miniLog(
+      "long-knock.csv",
+      baseHeaders,
+      Array.from({ length: 12 }, (_, index) => sampleAt(index * 0.05, { "Feedback Knock (deg)": -2.11 })),
+    ),
+  ],
+  "tune",
+);
+assert(longKnock.ok && longKnock.grade.letter === "F", "longer under-load knock is F");
+if (longKnock.ok) {
+  assert(longKnock.alerts.some((alert) => alert.title === "Knock under load"), "longer knock raises the under-load alert");
+}
+
+const droppedDam = buildSession(
+  [
+    miniLog(
+      "dropped-dam.csv",
+      baseHeaders,
+      [0, 0.05, 0.1].map((t) => sampleAt(t, { "Dyn Adv Mult (DAM)": 0.75, "Feedback Knock (deg)": -1.05 })),
+    ),
+  ],
+  "tune",
+);
+assert(droppedDam.ok && droppedDam.grade.letter === "F", "short knock with dropped DAM is still F");
+if (droppedDam.ok) {
+  assert(droppedDam.alerts.some((alert) => alert.title === "Knock under load"), "dropped DAM does not get the noise exception");
+}
+
 console.log("checks passed");

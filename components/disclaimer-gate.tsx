@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 export const DISCLAIMER_TEXT =
-  "This review is just an estimate performed by an AI algorithm. It could be spot on or way out to lunch. Always have a tuner verify the logs before calling it safe. This is to be used as a simple spot check for obvious issues.";
+  "This review is a fixed checklist, not a tuner and not an AI. It looks for obvious problems. A short under-load knock blip can be sensor noise when DAM stays at 1.00 and fine knock learn is flat; anything else under load is treated as knock. The checklist can still miss something. Your tuner has the last word before you call a log safe.";
 
 /** Full-screen notice the user must acknowledge before using the app. */
 export function DisclaimerGate({ children }: { children: ReactNode }) {
