@@ -213,36 +213,35 @@ def write(name: str, reflash: str, rows: list[dict]) -> None:
 
 
 def wide_open_rows(t0: float, **pull_kwargs: float) -> list[dict]:
-    """2nd gear then 3rd gear, both wide open, with a lift between them."""
-    second = pull(
-        t0,
-        gear=2,
-        rpm0=3600,
-        rpm1=6500,
-        seconds=2.8,
-        speed0=24,
-        speed1=54,
-        **pull_kwargs,
-    )
-    second_end = second[-1]["t"]
-    lifted = lift(second_end + 0.1, **{key: pull_kwargs[key] for key in ("learn1", "learn3", "dam", "fkl") if key in pull_kwargs})
-    third_start = lifted[-1]["t"] + 0.15
+    """3rd gear then 4th gear, both wide open, with a lift between them."""
     third = pull(
-        third_start,
+        t0,
         gear=3,
         rpm0=2800,
-        rpm1=6100,
+        rpm1=6200,
         seconds=5.0,
-        speed0=34,
-        speed1=82,
+        speed0=32,
+        speed1=78,
         **pull_kwargs,
     )
-    return second + lifted + third
+    third_end = third[-1]["t"]
+    lifted = lift(third_end + 0.1, **{key: pull_kwargs[key] for key in ("learn1", "learn3", "dam", "fkl") if key in pull_kwargs})
+    fourth_start = lifted[-1]["t"] + 0.15
+    fourth = pull(
+        fourth_start,
+        gear=4,
+        rpm0=2400,
+        rpm1=5600,
+        seconds=6.0,
+        speed0=46,
+        speed1=108,
+        **pull_kwargs,
+    )
+    return third + lifted + fourth
 
 
-def pack(reflash: str, cruise_name: str, pull_name: str, **pull_kwargs: float) -> None:
+def pack(reflash: str, pull_name: str, **pull_kwargs: float) -> None:
     shared = {key: pull_kwargs[key] for key in ("learn1", "learn3", "dam", "fkl") if key in pull_kwargs}
-    write(cruise_name, reflash, cruise(4.0, 0.0, **shared))
     pulls = wide_open_rows(1.2, **pull_kwargs)
     rows = cruise(1.2, 0.0, **shared) + pulls + lift(pulls[-1]["t"] + 0.15, **shared)
     write(pull_name, reflash, rows)
@@ -252,7 +251,6 @@ def main() -> None:
     ROOT.mkdir(exist_ok=True)
     pack(
         "Sample Map Clean Commute - 16psi 93oct",
-        "sample-s-cruise.csv",
         "sample-s-pull.csv",
         boost_hold=16.1,
         target=16.0,
@@ -261,8 +259,6 @@ def main() -> None:
         learn1=-1.2,
         learn3=2.3,
     )
-    a_rows_knock = cruise(2.2, 0.0, learn1=-1.0, learn3=3.1, fk=-1.05, accel=14, boost=-6.2)
-    write("sample-a-cruise.csv", "Sample Map Almost Tidy - 16psi 93oct", a_rows_knock)
     a_pulls = wide_open_rows(
         1.2,
         boost_hold=16.05,
@@ -286,7 +282,6 @@ def main() -> None:
     )
     pack(
         "Sample Map Trim Goblin - 17psi 91oct",
-        "sample-b-cruise.csv",
         "sample-b-pull.csv",
         boost_hold=17.15,
         target=17.0,
@@ -299,7 +294,6 @@ def main() -> None:
     )
     pack(
         "Sample Map Needs a Conversation - 16psi 91oct",
-        "sample-c-cruise.csv",
         "sample-c-pull.csv",
         boost_hold=16.2,
         target=16.0,
@@ -335,6 +329,10 @@ def main() -> None:
         "Sample Map Knock Choir - 16psi 91oct",
         cruise(1.0, 0.0, dam=8.75, fkl=-6.0, learn3=4.0) + knocked + lift(knocked[-1]["t"] + 0.15, dam=8.75, fkl=-6.0, learn3=4.0),
     )
+
+
+    for stale in ROOT.glob("sample-*-cruise.csv"):
+        stale.unlink()
 
 
 if __name__ == "__main__":

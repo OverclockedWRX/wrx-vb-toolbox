@@ -68,8 +68,13 @@ if (knockFiles[0].session.ok) {
 }
 
 const multi = buildFileSessions(loadPack("s"), "tune");
-assert(multi.length === 2, "S pack should yield two file tabs");
-assert(multi.every((item) => item.session.ok), "both S files should review");
+assert(multi.length === 1, "S pack is one pull log");
+assert(multi[0].session.ok, "S pull should review");
+if (multi[0].session.ok) {
+  const gears = multi[0].session.review.pulls.map((pull) => pull.gear).sort((a, b) => a - b);
+  assert(gears.join(",") === "3,4", `S pull should be 3rd and 4th, got ${gears.join(",")}`);
+  assert(multi[0].session.review.onBoost, "S pull has wide-open load");
+}
 
 // Combined multi-log path still works for callers that want one grade across files.
 const combined = buildSession(loadPack("s"), "tune");

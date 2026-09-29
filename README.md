@@ -21,7 +21,7 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 - Drop in one or more **COBB Accessport CSV** logs
 - Get a clear **S / A / B / F** grade with notes on AFR, boost, knock, and other red flags
 - See charts for pulls, fueling, and estimated power
-- Load **sample logs** anytime to try the review, including fictional 2nd and 3rd gear wide-open pulls
+- Load **sample logs** anytime to try the review, including fictional 3rd and 4th gear wide-open pulls
 - Multi-file sessions open in tabs so you can compare pulls side by side
 - Fuel pressure under about 1,500 psi, coolant above 230°F, and oil above 250°F are an F. Octane is read from the tune name only when the number sits next to “oct”, such as `93oct`. The boost target is the first “N psi” between 5 and 35
 
@@ -46,7 +46,7 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 
 ## How to use it
 
-1. Open `wrxtoolbox0.14.1.html` (from the release zip)
+1. Open `wrxtoolbox0.14.2.html` (from the release zip)
 2. Read the short disclaimer and continue
 3. Optionally set the car preset above the tabs
 4. Use **Log review**, **Wheel / tire**, **VIN decoder**, or **OBD2 code lookup**
@@ -56,8 +56,8 @@ It is not an AI chatbot and it is not a human. It is a spot check for obvious pr
 The release folder includes a `Dockerfile`. It only serves the HTML file. Logs still stay in each browser.
 
 ```bash
-docker build -t wrxtoolbox:0.14.1 .
-docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.14.1
+docker build -t wrxtoolbox:0.14.2 .
+docker run -d --name wrxtoolbox -p 8080:80 wrxtoolbox:0.14.2
 ```
 
 Open http://127.0.0.1:8080 on that computer, or http://&lt;that-computer-ip&gt;:8080 from another device on the same network. Stop it with `docker rm -f wrxtoolbox`.
